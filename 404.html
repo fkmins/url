@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting...</title>
+  <style>
+    body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f6fa; color: #1a1a1a; margin: 0; }
+    .loader { border: 4px solid #e2e8f0; border-top: 4px solid #005ce6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="loader" id="spinner"></div>
+  <h2 id="message">Finding link...</h2>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzLpxVbeA9Tk9NZW1e8Z8W8vVwamoScteknqh3JPX3Yo1I93je5K4WwsjM7fuFzxf7S/exec";
+    const FALLBACK_URL = "http://fkmins.github.io"; 
+
+    async function processRedirect() {
+      // Because your app is hosted at /url/, we extract the last segment
+      const pathSegments = window.location.pathname.split('/').filter(p => p);
+      const slug = pathSegments[pathSegments.length - 1];
+
+      // If they just hit the base folder without a slug, go home
+      if (!slug || slug === 'url') {
+        window.location.href = FALLBACK_URL;
+        return;
+      }
+
+      try {
+        const res = await fetch(`${GAS_URL}?action=resolve&slug=${encodeURIComponent(slug)}`);
+        const data = await res.json();
+        
+        if (data.success && data.url) {
+          window.location.replace(data.url); // Use replace so the redirect doesn't break browser "Back" button history
+        } else {
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('message').innerText = "404 - Link Not Found";
+          setTimeout(() => { window.location.href = FALLBACK_URL; }, 2500);
+        }
+      } catch (e) {
+        document.getElementById('message').innerText = "Connection error. Redirecting home...";
+        setTimeout(() => { window.location.href = FALLBACK_URL; }, 2000);
+      }
+    }
+    
+    processRedirect();
+  </script>
+</body>
+</html>
