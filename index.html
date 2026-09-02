@@ -1,20 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusLink | AI Shortener</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: sans-serif; background-color: #f8fafc; }
+    .btn-loader { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-gray-100">
+    
+    <div class="mb-8 border-b-4 border-black pb-4">
+      <h1 class="text-3xl font-extrabold tracking-tight"><span class="text-red-600">Nexus</span>Link</h1>
+      <p class="text-gray-500 font-semibold text-sm mt-1">Smart Enterprise Routing</p>
+    </div>
+
+    <div id="shortenerForm" class="space-y-5">
+      <div>
+        <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Target URL <span class="text-red-600">*</span></label>
+        <input type="url" id="originalUrl" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white transition-all" placeholder="https://example.com/long-url">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Link Title <span class="text-blue-600 lowercase font-semibold">(Auto-fetches)</span></label>
+        <input type="text" id="linkTitle" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white transition-all" placeholder="Smart Title Agent...">
+      </div>
+      <button onclick="handleSubmit()" id="submitBtn" class="w-full bg-black hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-all flex justify-center items-center gap-2 mt-4">
+        <span id="btnText">Generate Link</span>
+        <div id="btnLoader" class="btn-loader"></div>
+      </button>
+    </div>
+
+    <div id="resultCard" class="hidden mt-6 pt-6 border-t-2 border-gray-100">
+      <div class="bg-blue-50 border-2 border-blue-100 rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
+        <div id="shortLink" class="text-blue-700 font-bold truncate select-all px-2 text-lg"></div>
+        <button onclick="copyLink()" id="copyBtn" class="shrink-0 bg-blue-600 hover:bg-black p-3 rounded-lg text-white">Copy</button>
+      </div>
+      <button onclick="location.reload()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 rounded-xl text-sm">Create Another</button>
+    </div>
+    
+    <div id="errorBox" class="hidden mt-4 bg-red-100 text-red-900 p-3 rounded-lg text-sm font-bold text-center border-2 border-red-200"></div>
+  </div>
+
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec'; 
 
     async function handleSubmit() {
-      const urlInput = document.getElementById('originalUrl');
-      const titleInput = document.getElementById('linkTitle');
-      
-      const url = urlInput ? urlInput.value.trim() : '';
-      const title = titleInput ? titleInput.value.trim() : '';
+      const url = document.getElementById('originalUrl').value.trim();
+      const title = document.getElementById('linkTitle').value.trim();
       
       const btn = document.getElementById('submitBtn');
       const errorBox = document.getElementById('errorBox');
       const resultCard = document.getElementById('resultCard');
 
-      // Frontend Safety Check
       if (!url) { 
-        errorBox.innerText = "Frontend Error: Please type a URL above.";
+        errorBox.innerText = "Error: No URL provided.";
         errorBox.classList.remove('hidden');
         return; 
       }
@@ -25,24 +68,17 @@
 
       try {
         const params = new URLSearchParams({
-          action: 'create',
-          url: url,
-          title: title,
-          domain: "https://fkmins.github.io/url/"
+          action: 'create', url: url, title: title, domain: "https://fkmins.github.io/url/"
         });
 
-        const fetchUrl = `${SCRIPT_URL}?${params.toString()}`;
-        console.log("Sending request to:", fetchUrl);
-
-        const response = await fetch(fetchUrl);
+        const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
         const res = await response.json();
         
         btn.disabled = false; document.getElementById('btnText').innerText = 'Generate Link';
         document.getElementById('btnLoader').style.display = 'none';
         
         if (!res.success) {
-           errorBox.innerText = res.message; 
-           errorBox.classList.remove('hidden');
+           errorBox.innerText = res.message; errorBox.classList.remove('hidden');
         } else {
            document.getElementById('shortLink').innerText = res.shortLink;
            resultCard.classList.remove('hidden');
@@ -51,9 +87,14 @@
       } catch (err) {
         btn.disabled = false; document.getElementById('btnText').innerText = 'Generate Link';
         document.getElementById('btnLoader').style.display = 'none';
-        errorBox.innerText = 'Network Error. ' + err.message; 
-        errorBox.classList.remove('hidden');
+        errorBox.innerText = 'Network Error. Check console.'; errorBox.classList.remove('hidden');
       }
     }
 
-    // ... (Keep your existing copyLink and resetForm functions)
+    function copyLink() {
+      navigator.clipboard.writeText(document.getElementById('shortLink').innerText);
+      document.getElementById('copyBtn').innerText = 'Copied!';
+    }
+  </script>
+</body>
+</html>
