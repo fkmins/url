@@ -8,11 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #000; }
-    .btn-loader {
-      border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff;
-      border-radius: 50%; width: 20px; height: 20px;
-      animation: spin 0.8s linear infinite; display: none;
-    }
+    .btn-loader { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
@@ -26,7 +22,8 @@
       <p class="text-gray-500 font-semibold text-sm mt-1">Smart Enterprise Routing</p>
     </div>
 
-    <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-5">
+    <!-- Removed onsubmit to prevent bugs, using standard button click -->
+    <div id="shortenerForm" class="space-y-5">
       <div>
         <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Target URL <span class="text-red-600">*</span></label>
         <input type="url" id="originalUrl" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:outline-none focus:border-blue-600 focus:bg-white transition-all" placeholder="https://example.com/long-url">
@@ -35,11 +32,11 @@
         <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Link Title <span class="text-blue-600 lowercase font-semibold">(Auto-fetches if empty)</span></label>
         <input type="text" id="linkTitle" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:outline-none focus:border-blue-600 focus:bg-white transition-all" placeholder="Smart Title Agent...">
       </div>
-      <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-all flex justify-center items-center gap-2 mt-4 shadow-lg">
+      <button onclick="handleSubmit()" id="submitBtn" class="w-full bg-black hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-all flex justify-center items-center gap-2 mt-4 shadow-lg">
         <span id="btnText">Generate Link</span>
         <div id="btnLoader" class="btn-loader"></div>
       </button>
-    </form>
+    </div>
 
     <div id="resultCard" class="hidden mt-6 pt-6 border-t-2 border-gray-100">
       <div class="bg-blue-50 border-2 border-blue-100 rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
@@ -57,8 +54,8 @@
   </div>
 
   <script>
-    // --- REPLACE WITH YOUR NEW WEB APP URL ---
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLpxVbeA9Tk9NZW1e8Z8W8vVwamoScteknqh3JPX3Yo1I93je5K4WwsjM7fuFzxf7S/exec'; 
+    // YOUR EXACT DEPLOYED URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec'; 
 
     async function handleSubmit() {
       const title = document.getElementById('linkTitle').value;
@@ -67,27 +64,30 @@
       const errorBox = document.getElementById('errorBox');
       const resultCard = document.getElementById('resultCard');
 
+      if (!url) { alert("Please enter a Target URL."); return; }
+
       errorBox.classList.add('hidden'); resultCard.classList.add('hidden');
       btn.disabled = true; document.getElementById('btnText').innerText = 'Processing...';
       document.getElementById('btnLoader').style.display = 'block';
 
       try {
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ 
-            originalUrl: url, 
-            title: title, 
-            domain: "https://fkmins.github.io/url/" 
-          })
+        // FIXED: Switched to GET request parameters to bypass CORS 100%
+        const params = new URLSearchParams({
+          action: 'create',
+          url: url,
+          title: title,
+          domain: "https://fkmins.github.io/url/"
         });
-        
+
+        const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
         const res = await response.json();
+        
         btn.disabled = false; document.getElementById('btnText').innerText = 'Generate Link';
         document.getElementById('btnLoader').style.display = 'none';
         
         if (!res.success) {
-           errorBox.innerText = res.message; errorBox.classList.remove('hidden');
+           errorBox.innerText = "Error: " + res.message; 
+           errorBox.classList.remove('hidden');
         } else {
            document.getElementById('shortLink').innerText = res.shortLink;
            resultCard.classList.remove('hidden');
@@ -96,7 +96,7 @@
       } catch (err) {
         btn.disabled = false; document.getElementById('btnText').innerText = 'Generate Link';
         document.getElementById('btnLoader').style.display = 'none';
-        errorBox.innerText = 'Network Error. Ensure Apps Script is deployed to Anyone.'; 
+        errorBox.innerText = 'Network Error. Make sure you deployed the Script as "Anyone". Details: ' + err.message; 
         errorBox.classList.remove('hidden');
       }
     }
@@ -114,7 +114,8 @@
     }
 
     function resetForm() {
-      document.getElementById('shortenerForm').reset();
+      document.getElementById('originalUrl').value = '';
+      document.getElementById('linkTitle').value = '';
       document.getElementById('shortenerForm').classList.remove('hidden');
       document.getElementById('resultCard').classList.add('hidden');
     }
