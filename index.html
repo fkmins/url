@@ -3,98 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexusLink | Shortener</title>
+  <title>NexusLink | Enterprise Shortener</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-  
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #000000; }
+    .smart-shadow { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); }
+    .input-focus:focus-within { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    
     .loader {
-      border: 3px solid rgba(255,255,255,0.2);
+      border: 3px solid rgba(255,255,255,0.3);
       border-top-color: #ffffff;
       border-radius: 50%;
       width: 20px;
       height: 20px;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
       display: none;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    
-    .blob {
-      position: absolute; filter: blur(100px); opacity: 0.4; z-index: -1;
-      border-radius: 50%; mix-blend-mode: multiply; animation: pulse 8s infinite alternate;
-    }
-    @keyframes pulse { 0% { transform: scale(1); } 100% { transform: scale(1.1); } }
   </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+<body class="min-h-screen flex items-center justify-center p-4">
   
-  <div class="blob bg-blue-600 w-96 h-96 top-0 left-0"></div>
-  <div class="blob bg-purple-600 w-96 h-96 bottom-0 right-0" style="animation-delay: 2s;"></div>
-
-  <div class="glass rounded-3xl p-8 w-full max-w-md relative shadow-2xl">
-    <div class="text-center mb-8">
-      <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg mb-4">
-        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
-        </svg>
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md smart-shadow border border-gray-100">
+    <div class="mb-8">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-10 h-10 bg-black text-white rounded-lg flex items-center justify-center font-bold text-xl">
+          N
+        </div>
+        <h1 class="text-2xl font-extrabold tracking-tight">NexusLink</h1>
       </div>
-      <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">NexusLink</h1>
-      <p class="text-slate-400 text-sm mt-1">Professional URL Shortener</p>
+      <p class="text-gray-500 text-sm font-medium">Smart URL Shortener & Manager</p>
     </div>
 
     <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-5">
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1.5">Link Title <span class="text-slate-500 font-normal">(Optional)</span></label>
-        <input type="text" id="linkTitle" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="e.g. Q3 Marketing Deck">
+        <label class="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">Target URL <span class="text-red-500">*</span></label>
+        <div class="border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 transition-all input-focus">
+          <input type="url" id="originalUrl" required class="w-full bg-transparent text-black placeholder-gray-400 focus:outline-none font-medium" placeholder="https://example.com/long-url">
+        </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-1.5">Target URL</label>
-        <input type="url" id="originalUrl" required class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="https://example.com/very-long-link">
+        <label class="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-2">Link Title <span class="text-gray-400 font-normal lowercase">(Auto-fetches if empty)</span></label>
+        <div class="border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 transition-all input-focus">
+          <input type="text" id="linkTitle" class="w-full bg-transparent text-black placeholder-gray-400 focus:outline-none font-medium" placeholder="Leave blank for smart-title">
+        </div>
       </div>
 
-      <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-500/25 transition-all flex justify-center items-center gap-2 mt-2">
-        <span id="btnText">Shrink URL</span>
+      <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors flex justify-center items-center gap-2 mt-4">
+        <span id="btnText">Generate Short Link</span>
         <div id="btnLoader" class="loader"></div>
       </button>
     </form>
 
-    <div id="resultCard" class="hidden mt-6 pt-6 border-t border-slate-700/50 transition-all">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-medium text-slate-300">Your Short Link</span>
-        <span id="statusBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full"></span>
+    <div id="resultCard" class="hidden mt-6 pt-6 border-t border-gray-100 transition-all">
+      <div class="flex items-center justify-between mb-4">
+        <span class="text-sm font-bold text-gray-900 uppercase tracking-wide">Result</span>
+        <span id="statusBadge" class="text-xs font-bold px-3 py-1 rounded-md"></span>
       </div>
       
-      <div class="bg-slate-800/80 border border-slate-700 rounded-xl p-3 flex items-center justify-between gap-3 mb-5">
-        <div id="shortLink" class="text-blue-400 font-medium truncate select-all px-2"></div>
-        <button onclick="copyLink()" id="copyBtn" class="shrink-0 bg-slate-700 hover:bg-slate-600 p-2.5 rounded-lg text-slate-200 transition-colors" title="Copy to clipboard">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+      <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
+        <div id="shortLink" class="text-blue-600 font-bold truncate select-all px-2"></div>
+        <button onclick="copyLink()" id="copyBtn" class="shrink-0 bg-black hover:bg-gray-800 p-2.5 rounded-lg text-white transition-colors" title="Copy to clipboard">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
         </button>
       </div>
 
       <div class="flex gap-3">
-        <button onclick="toggleQR()" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-medium py-2.5 rounded-xl transition-all text-sm flex items-center justify-center gap-2">
-          QR Code
+        <button onclick="toggleQR()" class="flex-1 bg-white hover:bg-gray-50 border-2 border-gray-200 text-black font-bold py-3 rounded-xl transition-all text-sm">
+          Show QR Code
         </button>
-        <button onclick="resetForm()" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-medium py-2.5 rounded-xl transition-all text-sm">
+        <button onclick="resetForm()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 rounded-xl transition-all text-sm">
           Create Another
         </button>
       </div>
 
-      <div id="qrBox" class="hidden mt-5 text-center">
-        <div class="bg-white p-3 rounded-xl inline-block shadow-lg">
+      <div id="qrBox" class="hidden mt-4 text-center">
+        <div class="bg-white p-4 rounded-xl border-2 border-gray-200 inline-block">
           <img id="qrImage" src="" alt="QR Code" class="w-40 h-40">
         </div>
       </div>
     </div>
     
-    <div id="errorBox" class="hidden mt-4 bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-xl text-sm text-center"></div>
+    <div id="errorBox" class="hidden mt-5 bg-red-50 border-l-4 border-red-600 text-red-900 p-4 rounded-r-lg text-sm font-medium"></div>
   </div>
 
   <script>
-    // --- IMPORTANT: PASTE YOUR DEPLOYED WEB APP URL HERE ---
+    // URL has been updated to yours automatically
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLpxVbeA9Tk9NZW1e8Z8W8vVwamoScteknqh3JPX3Yo1I93je5K4WwsjM7fuFzxf7S/exec'; 
 
     async function handleSubmit() {
@@ -109,18 +105,23 @@
       errorBox.classList.add('hidden');
       resultCard.classList.add('hidden');
       btn.disabled = true;
-      btnText.innerText = 'Processing...';
+      btnText.innerText = title ? 'Generating...' : 'Scraping Smart Title...';
       btnLoader.style.display = 'block';
-      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      btn.classList.add('opacity-70', 'cursor-not-allowed');
 
       try {
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
-          // text/plain prevents CORS preflight errors with Google Apps Script
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ originalUrl: url, title: title })
         });
         
+        // Check if Google sent back an HTML login page instead of JSON
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("text/html") !== -1) {
+          throw new Error("Permissions Error: Ensure the script is deployed to execute as 'Me' and accessible by 'Anyone'.");
+        }
+
         const res = await response.json();
         resetBtnUI();
         
@@ -129,11 +130,11 @@
         } else {
            const badge = document.getElementById('statusBadge');
            if (res.isDuplicate) {
-             badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20';
-             badge.innerText = 'Already Existed';
+             badge.className = 'text-xs font-bold px-3 py-1 rounded-md bg-black text-white';
+             badge.innerText = 'Existing Match';
            } else {
-             badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-             badge.innerText = 'New Link Created';
+             badge.className = 'text-xs font-bold px-3 py-1 rounded-md bg-blue-100 text-blue-700';
+             badge.innerText = 'New Link';
            }
            
            document.getElementById('shortLink').innerText = res.shortLink;
@@ -145,21 +146,21 @@
         }
       } catch (err) {
         resetBtnUI();
-        showError('Connection Error: Make sure the Google Script is fully deployed and the URL is correct.');
+        showError(err.message.includes('Permissions') ? err.message : 'Network Error: Failed to connect to the Google backend.');
       }
     }
 
     function resetBtnUI() {
       const btn = document.getElementById('submitBtn');
-      document.getElementById('btnText').innerText = 'Shrink URL';
+      document.getElementById('btnText').innerText = 'Generate Short Link';
       document.getElementById('btnLoader').style.display = 'none';
       btn.disabled = false;
-      btn.classList.remove('opacity-75', 'cursor-not-allowed');
+      btn.classList.remove('opacity-70', 'cursor-not-allowed');
     }
 
     function showError(msg) {
       const errorBox = document.getElementById('errorBox');
-      errorBox.innerText = msg;
+      errorBox.innerHTML = `<strong>Error:</strong> ${msg}`;
       errorBox.classList.remove('hidden');
     }
 
@@ -168,8 +169,12 @@
       navigator.clipboard.writeText(text).then(() => {
         const copyBtn = document.getElementById('copyBtn');
         const originalHTML = copyBtn.innerHTML;
-        copyBtn.innerHTML = '<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"></path></svg>';
-        setTimeout(() => copyBtn.innerHTML = originalHTML, 2000);
+        copyBtn.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>';
+        copyBtn.classList.replace('bg-black', 'bg-blue-600');
+        setTimeout(() => {
+          copyBtn.innerHTML = originalHTML;
+          copyBtn.classList.replace('bg-blue-600', 'bg-black');
+        }, 2000);
       });
     }
 
@@ -179,7 +184,7 @@
       document.getElementById('shortenerForm').reset();
       document.getElementById('shortenerForm').classList.remove('hidden');
       document.getElementById('resultCard').classList.add('hidden');
-      document.getElementById('linkTitle').focus();
+      document.getElementById('originalUrl').focus();
     }
   </script>
 </body>
