@@ -3,50 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redirecting...</title>
+  <title>Routing | NexusLink</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f4f6fa; color: #1a1a1a; margin: 0; }
-    .loader { border: 4px solid #e2e8f0; border-top: 4px solid #005ce6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    body { background-color: #000000; color: #ffffff; font-family: system-ui, sans-serif; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    
+    /* High-tech pulsing AI animation */
+    .radar {
+      position: relative; width: 120px; height: 120px;
+      display: flex; justify-content: center; align-items: center;
+    }
+    .core { width: 30px; height: 30px; background: #3b82f6; border-radius: 50%; z-index: 10; box-shadow: 0 0 20px #3b82f6; }
+    .ring {
+      position: absolute; width: 100%; height: 100%;
+      border: 2px solid #ef4444; border-radius: 50%;
+      animation: pulse 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    .ring:nth-child(2) { animation-delay: 0.4s; border-color: #3b82f6; }
+    .ring:nth-child(3) { animation-delay: 0.8s; border-color: #ffffff; }
+
+    @keyframes pulse {
+      0% { transform: scale(0.3); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
   </style>
 </head>
 <body>
-  <div class="loader" id="spinner"></div>
-  <h2 id="message">Finding link...</h2>
+
+  <div id="loadingUI" class="text-center">
+    <div class="radar mx-auto mb-8">
+      <div class="core"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+    </div>
+    <h1 class="text-2xl font-bold tracking-widest uppercase text-white mb-2">Nexus Routing</h1>
+    <p class="text-gray-400 font-mono text-sm" id="statusText">Establishing secure connection...</p>
+  </div>
+
+  <div id="errorUI" class="hidden text-center bg-white p-8 rounded-2xl max-w-sm mx-4">
+    <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    </div>
+    <h2 class="text-black text-2xl font-bold mb-2">Link Not Found</h2>
+    <p class="text-gray-500 text-sm mb-6">The link you clicked has expired or does not exist.</p>
+    <a href="https://fkmins.github.io/url/" class="bg-black text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-600 transition-colors">Create a Link</a>
+  </div>
 
   <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzLpxVbeA9Tk9NZW1e8Z8W8vVwamoScteknqh3JPX3Yo1I93je5K4WwsjM7fuFzxf7S/exec";
-    const FALLBACK_URL = "http://fkmins.github.io"; 
+    // --- REPLACE WITH YOUR NEW WEB APP URL ---
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzLpxVbeA9Tk9NZW1e8Z8W8vVwamoScteknqh3JPX3Yo1I93je5K4WwsjM7fuFzxf7S/exec';
 
-    async function processRedirect() {
-      // Because your app is hosted at /url/, we extract the last segment
+    async function routeUser() {
+      // Extract the shortcode from the path (e.g. from "/url/3dbiys", grab "3dbiys")
       const pathSegments = window.location.pathname.split('/').filter(p => p);
-      const slug = pathSegments[pathSegments.length - 1];
+      const shortCode = pathSegments[pathSegments.length - 1];
 
-      // If they just hit the base folder without a slug, go home
-      if (!slug || slug === 'url') {
-        window.location.href = FALLBACK_URL;
+      // If there's no code (e.g. they typed /url/something/wrong), fail out
+      if (!shortCode || shortCode === 'url') {
+        document.getElementById('loadingUI').classList.add('hidden');
+        document.getElementById('errorUI').classList.remove('hidden');
         return;
       }
 
+      document.getElementById('statusText').innerText = "Locating destination: " + shortCode;
+
       try {
-        const res = await fetch(`${GAS_URL}?action=resolve&slug=${encodeURIComponent(slug)}`);
-        const data = await res.json();
-        
+        // Query the Apps Script API to get the long URL
+        const response = await fetch(`${SCRIPT_URL}?code=${shortCode}`);
+        const data = await response.json();
+
         if (data.success && data.url) {
-          window.location.replace(data.url); // Use replace so the redirect doesn't break browser "Back" button history
+          document.getElementById('statusText').innerText = "Target acquired. Redirecting...";
+          document.getElementById('statusText').classList.replace('text-gray-400', 'text-blue-400');
+          
+          // Secure native redirect
+          setTimeout(() => { window.location.replace(data.url); }, 600);
         } else {
-          document.getElementById('spinner').style.display = 'none';
-          document.getElementById('message').innerText = "404 - Link Not Found";
-          setTimeout(() => { window.location.href = FALLBACK_URL; }, 2500);
+          throw new Error('Not found');
         }
-      } catch (e) {
-        document.getElementById('message').innerText = "Connection error. Redirecting home...";
-        setTimeout(() => { window.location.href = FALLBACK_URL; }, 2000);
+      } catch (err) {
+        document.getElementById('loadingUI').classList.add('hidden');
+        document.getElementById('errorUI').classList.remove('hidden');
       }
     }
-    
-    processRedirect();
+
+    // Start routing immediately
+    routeUser();
   </script>
 </body>
 </html>
