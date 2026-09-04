@@ -29,7 +29,7 @@
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
 
     async function routeUser() {
-      // Extract code (e.g. "hzqu45") from the GitHub Pages URL
+      // Extract the code from the end of the URL
       const pathSegments = window.location.pathname.split('/').filter(p => p);
       const shortCode = pathSegments[pathSegments.length - 1];
 
@@ -45,6 +45,7 @@
         if (data.success && data.url) {
           document.getElementById('statusText').innerText = "Target acquired. Redirecting...";
           document.getElementById('statusText').classList.add('text-blue-400');
+          // Important: Replace prevents the redirect page from entering the browser's back-button history
           window.location.replace(data.url);
         } else {
           showError();
