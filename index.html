@@ -43,8 +43,6 @@
     </form>
 
     <div id="resultCard" class="hidden mt-6 pt-6 border-t-2 border-gray-100">
-      
-      <!-- QR Code Display -->
       <div class="flex flex-col items-center justify-center mb-5">
         <img id="qrCode" src="" alt="QR Code" class="w-32 h-32 border-2 border-gray-200 rounded-lg p-1 mb-2">
         <p id="resultTitle" class="text-xs font-bold text-gray-500 uppercase tracking-wide truncate w-full text-center"></p>
@@ -60,7 +58,6 @@
     <div id="errorBox" class="hidden mt-4 bg-red-100 text-red-900 p-3 rounded-lg text-sm font-bold text-center border-2 border-red-200"></div>
   </div>
 
-  <!-- Local History -->
   <div class="w-full max-w-md">
     <h3 class="text-xs font-bold text-gray-500 uppercase mb-3 pl-1">Your Recent Links</h3>
     <div id="historyList" class="space-y-3">
@@ -95,10 +92,6 @@
         const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
         const res = await response.json();
         
-        btn.disabled = false; 
-        document.getElementById('btnText').innerText = 'Generate Link';
-        document.getElementById('btnLoader').style.display = 'none';
-        
         if (!res.success) {
            errorBox.innerText = res.message; 
            errorBox.classList.remove('hidden');
@@ -112,11 +105,14 @@
            saveToHistory(res.shortLink, res.title, url);
         }
       } catch (err) {
+        console.error("Network or parsing error:", err);
+        errorBox.innerText = 'Network Error. Please check your connection or console.'; 
+        errorBox.classList.remove('hidden');
+      } finally {
+        // ALWAYS resets the UI, stopping the "Processing..." freeze forever
         btn.disabled = false; 
         document.getElementById('btnText').innerText = 'Generate Link';
         document.getElementById('btnLoader').style.display = 'none';
-        errorBox.innerText = 'Network Error. Check console.'; 
-        errorBox.classList.remove('hidden');
       }
     }
 
