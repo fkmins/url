@@ -13,10 +13,7 @@
 
     .snow {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
-      background-image: 
-        radial-gradient(white, rgba(255,255,255,0) 2px),
-        radial-gradient(white, rgba(255,255,255,0) 1px),
-        radial-gradient(white, rgba(255,255,255,0) 2px);
+      background-image: radial-gradient(white, rgba(255,255,255,0) 2px), radial-gradient(white, rgba(255,255,255,0) 1px), radial-gradient(white, rgba(255,255,255,0) 2px);
       background-size: 550px 550px, 350px 350px, 250px 250px;
       animation: snow-anim 20s linear infinite;
     }
@@ -34,15 +31,15 @@
 
   <div id="loadingUI" class="relative z-10 text-center bg-black/60 p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl backdrop-blur-sm">
     <div class="loader"></div>
-    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-4 uppercase inline-block">NexusLink</h1>
+    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-4 uppercase inline-block shadow-lg">NexusLink</h1>
     <p class="text-white mt-2 font-bold uppercase tracking-widest text-sm" id="statusText">Locating Target...</p>
   </div>
 
   <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-sm w-full border-4 border-gray-200 shadow-2xl">
-    <h1 class="text-2xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase inline-block">NexusLink</h1>
+    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase inline-block shadow-lg">NexusLink</h1>
     <h2 class="text-2xl font-black text-red-600 mb-2 uppercase">Link Not Found</h2>
-    <p class="text-gray-600 mb-8 font-bold text-sm" id="errorReason">The link you clicked has expired or does not exist in the database.</p>
-    <a href="/url/" class="block bg-black text-white px-6 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-yellow-400 hover:text-black border-2 border-black transition-colors">Create a Link</a>
+    <p class="text-gray-600 mb-8 font-bold text-sm" id="errorReason">The link you clicked has expired or does not exist.</p>
+    <a href="/url/" class="block bg-black text-white px-6 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-yellow-400 hover:text-black border-2 border-black transition-colors shadow-lg">Create a Link</a>
   </div>
 
   <script>
@@ -52,10 +49,7 @@
       const pathSegments = window.location.pathname.split('/').filter(p => p);
       const shortCode = pathSegments[pathSegments.length - 1];
 
-      if (!shortCode || shortCode === 'url' || shortCode.includes('.html')) {
-        showError();
-        return;
-      }
+      if (!shortCode || shortCode === 'url' || shortCode.includes('.html')) return showError();
 
       try {
         const response = await fetch(`${SCRIPT_URL}?code=${shortCode}`);
@@ -65,19 +59,14 @@
           document.getElementById('statusText').innerText = "Target acquired. Redirecting...";
           document.getElementById('statusText').classList.replace('text-white', 'text-yellow-400');
           window.location.replace(data.url);
-        } else {
-          showError();
-        }
-      } catch (err) {
-        showError();
-      }
+        } else showError();
+      } catch (err) { showError(); }
     }
 
     function showError() {
       document.getElementById('loadingUI').classList.add('hidden');
       document.getElementById('errorUI').classList.remove('hidden');
     }
-
     routeUser();
   </script>
 </body>
