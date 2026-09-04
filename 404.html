@@ -6,54 +6,63 @@
   <title>Routing | NexusLink</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { background-color: #000000; color: #ffffff; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; font-family: sans-serif; }
-    .loader { border: 4px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    body { background-color: #0f172a; color: #ffffff; height: 100vh; margin: 0; display: flex; align-items: center; justify-content: center; font-family: system-ui, sans-serif; }
+    .loader { border: 3px solid rgba(255,255,255,0.1); border-top-color: #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-  <div id="loadingUI" class="text-center">
+  <div id="loadingUI" class="text-center animate-pulse">
     <div class="loader"></div>
-    <h1 class="text-xl font-bold tracking-widest uppercase">Nexus Routing</h1>
-    <p class="text-gray-400 mt-2" id="statusText">Locating destination...</p>
+    <h1 class="text-lg font-bold tracking-widest uppercase text-gray-200">Nexus Routing</h1>
+    <p class="text-gray-400 text-sm mt-2" id="statusText">Locating destination...</p>
   </div>
 
-  <div id="errorUI" class="hidden text-center bg-white p-8 rounded-xl max-w-sm mx-4 text-black">
-    <h2 class="text-2xl font-bold text-red-600 mb-2">Link Not Found</h2>
-    <p class="text-gray-600 mb-6" id="errorReason">The link you clicked has expired or does not exist.</p>
-    <a href="/url/" class="bg-black text-white px-6 py-3 rounded-lg font-bold">Create a Link</a>
+  <div id="errorUI" class="hidden text-center bg-white p-8 rounded-2xl max-w-sm mx-4 text-black shadow-2xl">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    </div>
+    <h2 class="text-xl font-extrabold text-gray-900 mb-2">Link Not Found</h2>
+    <p class="text-gray-500 mb-6 text-sm" id="errorReason">The link you clicked has expired or does not exist.</p>
+    <a href="/url/" class="block w-full bg-gray-900 hover:bg-blue-600 text-white py-3 rounded-xl font-bold transition-colors">Create a Link</a>
   </div>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
+    const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_WEB_APP_URL_HERE'; // Replace with new deployment URL
 
     async function routeUser() {
-      // Extract code (e.g. "hzqu45") from the GitHub Pages URL
       const pathSegments = window.location.pathname.split('/').filter(p => p);
       const shortCode = pathSegments[pathSegments.length - 1];
 
+      // Prevent routing if it's the root directory or an HTML file
       if (!shortCode || shortCode === 'url' || shortCode.includes('.html')) {
-        document.getElementById('loadingUI').classList.add('hidden');
-        document.getElementById('errorUI').classList.remove('hidden');
+        showError();
         return;
       }
 
       try {
+        // Because of GS caching, this request will now be significantly faster
         const response = await fetch(`${SCRIPT_URL}?code=${shortCode}`);
         const data = await response.json();
 
         if (data.success && data.url) {
           document.getElementById('statusText').innerText = "Target acquired. Redirecting...";
-          document.getElementById('statusText').classList.add('text-blue-400');
+          document.getElementById('statusText').classList.replace('text-gray-400', 'text-blue-400');
+          
+          // Using replace ensures the routing page isn't stuck in the user's back-button history
           window.location.replace(data.url);
         } else {
-          throw new Error("Link missing from database");
+          showError();
         }
       } catch (err) {
-        document.getElementById('loadingUI').classList.add('hidden');
-        document.getElementById('errorUI').classList.remove('hidden');
+        showError();
       }
+    }
+
+    function showError() {
+      document.getElementById('loadingUI').classList.add('hidden');
+      document.getElementById('errorUI').classList.remove('hidden');
     }
 
     routeUser();
