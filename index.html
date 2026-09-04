@@ -9,33 +9,20 @@
   <style>
     body { font-family: sans-serif; margin: 0; padding: 0; min-height: 100vh; }
     
-    /* Wolf Background + Overlay */
-    .bg-wolf {
-      position: fixed; inset: 0; z-index: -2;
-      background-image: url('https://img.magnific.com/free-vector/hand-drawn-wolf-head-silhouette_23-2150523847.jpg');
-      background-size: cover; background-position: center;
-    }
+    .bg-wolf { position: fixed; inset: 0; z-index: -2; background-image: url('https://img.magnific.com/free-vector/hand-drawn-wolf-head-silhouette_23-2150523847.jpg'); background-size: cover; background-position: center; }
     .bg-overlay { position: fixed; inset: 0; z-index: -1; background-color: rgba(0, 0, 0, 0.7); }
 
-    /* Parallax CSS Snow Engine */
     .snow {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;
-      background-image: 
-        radial-gradient(white, rgba(255,255,255,0) 2px),
-        radial-gradient(white, rgba(255,255,255,0) 1px),
-        radial-gradient(white, rgba(255,255,255,0) 2px);
+      background-image: radial-gradient(white, rgba(255,255,255,0) 2px), radial-gradient(white, rgba(255,255,255,0) 1px), radial-gradient(white, rgba(255,255,255,0) 2px);
       background-size: 550px 550px, 350px 350px, 250px 250px;
       animation: snow-anim 20s linear infinite;
     }
-    @keyframes snow-anim {
-      0% { background-position: 0px 0px, 0px 0px, 0px 0px; }
-      100% { background-position: 500px 1000px, 400px 400px, 300px 300px; }
-    }
+    @keyframes snow-anim { 0% { background-position: 0px 0px, 0px 0px, 0px 0px; } 100% { background-position: 500px 1000px, 400px 400px, 300px 300px; } }
 
     .btn-loader { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Custom Toast */
     #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 50; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-weight: bold; }
     #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
   </style>
@@ -46,13 +33,14 @@
   <div class="bg-overlay"></div>
   <div class="snow"></div>
 
-  <!-- Auth Screen -->
+  <!-- AUTH SCREEN -->
   <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200 mt-10">
-    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase">NexusLink</h1>
+    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase inline-block">NexusLink</h1>
     <p class="text-gray-600 font-bold mb-6">Enterprise Access Restricted.</p>
     
+    <!-- FIX YOUR 401 ERROR BY PASTING YOUR CLIENT ID BELOW -->
     <div id="g_id_onload"
-         data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com"
+         data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com" 
          data-context="signin"
          data-ux_mode="popup"
          data-callback="handleCredentialResponse"
@@ -64,12 +52,10 @@
     <div id="authLoader" class="hidden mt-4 text-gray-500 font-bold text-sm">Verifying access...</div>
   </div>
 
-  <!-- Main App Screen (Hidden until Auth) -->
+  <!-- MAIN APP SCREEN -->
   <div id="appScreen" class="relative z-10 w-full max-w-md hidden mt-8">
-    
     <div class="bg-white rounded-3xl p-8 shadow-2xl border-4 border-gray-200 mb-8 text-center">
-      <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase shadow-lg">NexusLink</h1>
-      
+      <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase shadow-lg inline-block">NexusLink</h1>
       <p class="text-xs font-bold text-gray-400 mb-6 uppercase" id="userEmailDisplay"></p>
 
       <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4 text-center">
@@ -96,23 +82,19 @@
 
       <div id="resultCard" class="hidden mt-6 pt-6 border-t-2 border-gray-100 text-center">
         <p id="resultTitle" class="text-sm font-bold text-gray-500 uppercase tracking-wide truncate w-full mb-4"></p>
-
         <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 flex flex-col items-center gap-3 mb-4 shadow-sm">
           <input type="text" id="shortLink" readonly class="bg-transparent text-black font-black w-full text-center outline-none cursor-text text-lg truncate">
-          <button onclick="copyLink()" class="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors uppercase">Copy Link</button>
+          <button onclick="copyLink()" class="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors uppercase border-2 border-black">Copy Link</button>
         </div>
         <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 rounded-xl text-sm transition-colors uppercase">Create Another</button>
       </div>
-      
       <div id="errorBox" class="hidden mt-4 bg-red-100 text-red-900 p-3 rounded-lg text-sm font-bold text-center border-2 border-red-200"></div>
     </div>
 
-    <!-- Centered History -->
+    <!-- HISTORY -->
     <div class="w-full text-center bg-white/95 p-6 rounded-3xl border-4 border-gray-200 shadow-2xl">
       <h3 class="text-sm font-black text-black uppercase tracking-widest mb-4">Your Recent Links</h3>
-      <div id="historyList" class="space-y-3">
-        <!-- Injected via JS -->
-      </div>
+      <div id="historyList" class="space-y-3"></div>
     </div>
   </div>
 
@@ -168,35 +150,26 @@
       const resultCard = document.getElementById('resultCard');
 
       errorBox.classList.add('hidden');
-      btn.disabled = true; 
-      document.getElementById('btnText').innerText = 'Processing...';
+      btn.disabled = true; document.getElementById('btnText').innerText = 'Processing...';
       document.getElementById('btnLoader').style.display = 'block';
 
       try {
-        const params = new URLSearchParams({
-          action: 'create', url: url, title: title, alias: alias, email: currentUserEmail, domain: "https://fkmins.github.io/url/"
-        });
-
+        const params = new URLSearchParams({ action: 'create', url: url, title: title, alias: alias, email: currentUserEmail, domain: "https://fkmins.github.io/url/" });
         const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
         const res = await response.json();
         
         if (!res.success) {
-           errorBox.innerText = res.message; 
-           errorBox.classList.remove('hidden');
+           errorBox.innerText = res.message; errorBox.classList.remove('hidden');
         } else {
            document.getElementById('shortLink').value = res.shortLink;
            document.getElementById('resultTitle').innerText = res.title;
-           resultCard.classList.remove('hidden');
-           document.getElementById('shortenerForm').classList.add('hidden');
+           resultCard.classList.remove('hidden'); document.getElementById('shortenerForm').classList.add('hidden');
            saveToHistory(res.shortLink, res.title);
         }
       } catch (err) {
-        errorBox.innerText = 'Network Error. Check console.'; 
-        errorBox.classList.remove('hidden');
+        errorBox.innerText = 'Network Error. Check console.'; errorBox.classList.remove('hidden');
       } finally {
-        btn.disabled = false; 
-        document.getElementById('btnText').innerText = 'Generate Link';
-        document.getElementById('btnLoader').style.display = 'none';
+        btn.disabled = false; document.getElementById('btnText').innerText = 'Generate Link'; document.getElementById('btnLoader').style.display = 'none';
       }
     }
 
@@ -208,22 +181,19 @@
 
     function copyLink() {
       const copyText = document.getElementById('shortLink');
-      copyText.select();
-      navigator.clipboard.writeText(copyText.value);
-      showToast();
+      copyText.select(); navigator.clipboard.writeText(copyText.value); showToast();
     }
 
     function showToast() {
       const toast = document.getElementById("toast");
-      toast.className = "show";
-      setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+      toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
     }
 
     function saveToHistory(shortLink, title) {
       let history = JSON.parse(localStorage.getItem('nexusHistory') || '[]');
       if(!history.find(item => item.short === shortLink)){
         history.unshift({ short: shortLink, title: title || 'Untitled' });
-        if(history.length > 5) history.pop(); // Keep strictly 5
+        if(history.length > 5) history.pop();
         localStorage.setItem('nexusHistory', JSON.stringify(history));
       }
       loadHistory();
@@ -232,17 +202,13 @@
     function loadHistory() {
       const historyList = document.getElementById('historyList');
       const history = JSON.parse(localStorage.getItem('nexusHistory') || '[]');
-      
-      if(history.length === 0) {
-        historyList.innerHTML = '<p class="text-sm text-gray-500 font-semibold mt-2">No links created yet.</p>';
-        return;
-      }
+      if(history.length === 0) { historyList.innerHTML = '<p class="text-sm text-gray-500 font-semibold mt-2">No links created yet.</p>'; return; }
 
       historyList.innerHTML = history.map(item => `
         <div class="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 flex flex-col items-center text-center">
           <p class="font-bold text-gray-900 text-sm truncate w-full">${item.title}</p>
           <a href="${item.short}" target="_blank" class="text-xs font-black text-blue-600 truncate block hover:underline mt-1 w-full">${item.short}</a>
-          <button onclick="navigator.clipboard.writeText('${item.short}'); showToast();" class="mt-3 bg-black text-white px-4 py-2 rounded-lg text-xs font-bold uppercase hover:bg-yellow-400 hover:text-black transition-colors w-full">Copy</button>
+          <button onclick="navigator.clipboard.writeText('${item.short}'); showToast();" class="mt-3 bg-black text-white px-4 py-2 rounded-lg text-xs font-bold uppercase hover:bg-yellow-400 hover:text-black border-2 border-black transition-colors w-full">Copy</button>
         </div>
       `).join('');
     }
