@@ -35,7 +35,7 @@
   <div class="snow"></div>
 
   <!-- AUTH SCREEN -->
-  <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200 mt-10">
+  <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200 mt-10 hidden">
     <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase inline-block">NexusLink</h1>
     <p class="text-gray-600 font-bold mb-6 text-sm">Enterprise Access Restricted.</p>
     
@@ -89,31 +89,38 @@
         </div>
         <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-2 rounded-xl text-xs transition-colors uppercase">Create Another</button>
       </div>
+      <div id="errorBox" class="hidden mt-3 bg-red-100 text-red-900 p-2 rounded-lg text-xs font-bold text-center border-2 border-red-200"></div>
     </div>
 
-    <!-- RECENT LINKS (Grid: stacked on mobile, side-by-side on desktop) -->
+    <!-- RECENT LINKS (Synced with Cloud) -->
     <div class="w-full bg-white/95 p-6 rounded-3xl border-4 border-gray-200 shadow-2xl">
       <div class="flex justify-between items-center mb-4 border-b-2 border-gray-200 pb-2">
         <h3 class="text-xs font-black text-black uppercase tracking-widest">Recent Links</h3>
         <button onclick="openHistoryModal()" class="text-[10px] bg-black text-white px-3 py-1 rounded-md uppercase font-bold hover:bg-yellow-400 hover:text-black transition-colors">Cloud History</button>
       </div>
       
-      <div id="historyList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div id="recentListLoader" class="flex justify-center my-4 hidden">
+        <div class="btn-loader border-black border-t-yellow-400 w-6 h-6 border-4" style="display:block"></div>
+      </div>
+      
+      <div id="recentHistoryList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <!-- Injected via JS -->
       </div>
     </div>
   </div>
 
-  <!-- FULL HISTORY MODAL -->
+  <!-- FULL CLOUD HISTORY MODAL WITH CRUD -->
   <div id="historyModal" class="fixed inset-0 z-50 bg-black/90 hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-3xl h-[80vh] rounded-3xl border-4 border-yellow-400 p-6 flex flex-col relative shadow-2xl">
-      <button onclick="closeHistoryModal()" class="absolute top-4 right-4 bg-gray-200 hover:bg-red-500 hover:text-white rounded-full w-8 h-8 font-black transition-colors">X</button>
+    <div class="bg-white w-full max-w-4xl h-[85vh] rounded-3xl border-4 border-yellow-400 p-6 flex flex-col relative shadow-2xl">
+      <button onclick="closeHistoryModal()" class="absolute top-4 right-4 bg-gray-200 hover:bg-red-500 hover:text-white rounded-full w-8 h-8 font-black transition-colors z-10">X</button>
+      
       <h2 class="text-xl font-black uppercase tracking-widest mb-4">Cloud Database History</h2>
-      <input type="text" id="searchInput" onkeyup="filterHistory()" placeholder="Search titles, links, or URLs..." class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 mb-4 outline-none focus:border-black font-medium">
+      
+      <input type="text" id="searchInput" onkeyup="filterHistory()" placeholder="Search titles, shortcodes, or target URLs..." class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 mb-4 outline-none focus:border-black font-medium">
       
       <div id="modalLoader" class="hidden flex-col items-center justify-center h-full">
          <div class="btn-loader border-black border-t-yellow-400 w-10 h-10 border-4 mb-4" style="display:block"></div>
-         <p class="font-bold text-gray-500 uppercase tracking-widest text-xs">Fetching Database...</p>
+         <p class="font-bold text-gray-500 uppercase tracking-widest text-xs">Syncing Database...</p>
       </div>
 
       <div id="fullHistoryContainer" class="flex-1 overflow-y-auto space-y-3 pr-2">
@@ -129,7 +136,7 @@
     let currentUserEmail = "";
 
     window.onload = () => {
-      fetch(`${SCRIPT_URL}?action=ping`).catch(()=>'');
+      fetch(`${SCRIPT_URL}?action=ping`).catch(()=>''); // Cold start wake
       const sessionStr = localStorage.getItem('nexusSession');
       if (sessionStr) {
         const session = JSON.parse(sessionStr);
@@ -137,7 +144,7 @@
           currentUserEmail = session.email;
           document.getElementById('authScreen').classList.add('hidden');
           document.getElementById('appScreen').classList.remove('hidden');
-          loadHistory();
+          syncCloudData(); // Replaces local storage logic completely
         } else {
           document.getElementById('authScreen').classList.remove('hidden');
         }
@@ -153,7 +160,6 @@
       document.getElementById('authScreen').classList.remove('hidden');
     }
 
-    // INSTANT OPTIMISTIC LOGIN
     function handleCredentialResponse(response) {
       let base64 = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
       let payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
@@ -163,7 +169,7 @@
       
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('appScreen').classList.remove('hidden');
-      loadHistory();
+      syncCloudData();
     }
 
     async function handleSubmit() {
@@ -177,12 +183,12 @@
       btn.disabled = true; document.getElementById('btnText').innerText = 'Processing...'; document.getElementById('btnLoader').style.display = 'block';
 
       try {
-        const params = new URLSearchParams({ action: 'create', url, title, alias, email: currentUserEmail });
+        const params = new URLSearchParams({ action: 'create', url, title, alias, email: currentUserEmail, domain: "https://fkmins.github.io/url/" });
         const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
         const res = await response.json();
         
         if (!res.success) {
-           if(res.message.includes("Unauthorized")) logout(); // Security Catch
+           if(res.message.includes("Unauthorized")) logout(); 
            errorBox.innerText = res.message; errorBox.classList.remove('hidden');
         } else {
            localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
@@ -190,7 +196,7 @@
            document.getElementById('resultTitle').innerText = res.title;
            document.getElementById('resultCard').classList.remove('hidden'); 
            document.getElementById('shortenerForm').classList.add('hidden');
-           saveToHistory(res.shortLink, res.title);
+           syncCloudData(); // Sync instantly
         }
       } catch (err) {
         errorBox.innerText = 'Network Error. Check console.'; errorBox.classList.remove('hidden');
@@ -199,12 +205,17 @@
       }
     }
 
-    // CLOUD HISTORY MODAL LOGIC
-    async function openHistoryModal() {
-      document.getElementById('historyModal').classList.remove('hidden');
-      document.getElementById('fullHistoryContainer').innerHTML = "";
-      document.getElementById('modalLoader').classList.remove('hidden');
-      document.getElementById('modalLoader').classList.add('flex');
+    // CLOUD SYNC LOGIC (Replaces Local Storage)
+    async function syncCloudData(openModal = false) {
+      if(openModal) {
+        document.getElementById('historyModal').classList.remove('hidden');
+        document.getElementById('fullHistoryContainer').innerHTML = "";
+        document.getElementById('modalLoader').classList.remove('hidden');
+        document.getElementById('modalLoader').classList.add('flex');
+      } else {
+        document.getElementById('recentHistoryList').innerHTML = "";
+        document.getElementById('recentListLoader').classList.remove('hidden');
+      }
 
       try {
         const response = await fetch(`${SCRIPT_URL}?action=history&email=${encodeURIComponent(currentUserEmail)}`);
@@ -212,50 +223,86 @@
         
         document.getElementById('modalLoader').classList.add('hidden');
         document.getElementById('modalLoader').classList.remove('flex');
+        document.getElementById('recentListLoader').classList.add('hidden');
 
         if(res.success) {
-          window.fullCloudHistory = res.history;
           renderCloudHistory(res.history);
+          renderRecentLinks(res.history.slice(0, 4)); // Show top 4 on dashboard
         } else if (res.message.includes("Unauthorized")) {
           logout();
         }
       } catch(e) {
         document.getElementById('modalLoader').classList.add('hidden');
-        document.getElementById('fullHistoryContainer').innerHTML = "<p class='text-center font-bold text-red-500'>Failed to load database.</p>";
+        document.getElementById('recentListLoader').classList.add('hidden');
       }
     }
 
-    function closeHistoryModal() {
-      document.getElementById('historyModal').classList.add('hidden');
+    function openHistoryModal() { syncCloudData(true); }
+    function closeHistoryModal() { document.getElementById('historyModal').classList.add('hidden'); }
+
+    // CRUD: Delete
+    async function deleteLink(code) {
+      if(!confirm(`Are you sure you want to permanently delete /${code}?`)) return;
+      openHistoryModal(); // show loader
+      await fetch(`${SCRIPT_URL}?action=delete&code=${code}&email=${encodeURIComponent(currentUserEmail)}`);
+      syncCloudData(true); // reload data
+    }
+
+    // CRUD: Update
+    async function editLink(code, oldUrl) {
+      const newUrl = prompt(`Enter new Target URL for /${code}:`, oldUrl);
+      if(!newUrl || newUrl === oldUrl) return;
+      openHistoryModal(); // show loader
+      await fetch(`${SCRIPT_URL}?action=update&code=${code}&url=${encodeURIComponent(newUrl)}&email=${encodeURIComponent(currentUserEmail)}`);
+      syncCloudData(true);
     }
 
     function renderCloudHistory(data) {
       const container = document.getElementById('fullHistoryContainer');
       if (data.length === 0) {
-        container.innerHTML = "<p class='text-center text-gray-500 font-bold'>No links found in database.</p>";
+        container.innerHTML = "<p class='text-center text-gray-500 font-bold mt-4'>No links found in database.</p>";
         return;
       }
       container.innerHTML = data.map(item => `
-        <div class="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 flex justify-between items-center filter-item">
-          <div class="overflow-hidden pr-4 w-full">
+        <div class="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 flex flex-col md:flex-row justify-between items-center filter-item gap-4">
+          <div class="overflow-hidden w-full">
             <p class="font-bold text-gray-900 text-sm truncate search-target">${item.title}</p>
-            <p class="text-[10px] text-gray-400 truncate search-target">${item.source}</p>
-            <div class="flex items-center gap-4 mt-1">
-              <a href="${item.short}" target="_blank" class="text-xs font-black text-blue-600 truncate hover:underline search-target">${item.short}</a>
-              <span class="text-[10px] font-bold text-gray-500 bg-gray-200 px-2 rounded-full">Clicks: ${item.clicks}</span>
+            <p class="text-[10px] text-gray-400 truncate search-target mb-1">${item.source}</p>
+            <div class="flex items-center gap-3">
+              <a href="${item.shortLink}" target="_blank" class="text-xs font-black text-blue-600 truncate hover:underline search-target">${item.shortLink}</a>
+              <span class="text-[10px] font-bold text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full">Clicks: ${item.clicks}</span>
             </div>
           </div>
-          <button onclick="navigator.clipboard.writeText('${item.short}'); showToast();" class="bg-black text-white px-4 py-2 rounded-lg text-xs font-bold uppercase hover:bg-yellow-400 hover:text-black transition-colors shrink-0">Copy</button>
+          <div class="flex gap-2 w-full md:w-auto shrink-0">
+            <button onclick="navigator.clipboard.writeText('${item.shortLink}'); showToast();" class="flex-1 bg-black text-white px-3 py-2 rounded-lg text-xs font-bold uppercase hover:bg-yellow-400 hover:text-black transition-colors">Copy</button>
+            <button onclick="editLink('${item.shortCode}', '${item.source}')" class="flex-1 bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-xs font-bold uppercase hover:bg-blue-600 hover:text-white transition-colors">Edit</button>
+            <button onclick="deleteLink('${item.shortCode}')" class="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded-lg text-xs font-bold uppercase hover:bg-red-600 hover:text-white transition-colors">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderRecentLinks(data) {
+      const container = document.getElementById('recentHistoryList');
+      if (data.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-400 font-bold col-span-full text-center py-4">No recent links.</p>';
+        return;
+      }
+      container.innerHTML = data.map(item => `
+        <div class="bg-gray-50 p-3 rounded-xl border-2 border-gray-200 flex flex-col items-center text-center justify-between">
+          <div class="w-full">
+            <p class="font-bold text-gray-900 text-xs truncate w-full">${item.title}</p>
+            <a href="${item.shortLink}" target="_blank" class="text-[10px] font-black text-blue-600 truncate block hover:underline mt-1 w-full">${item.shortLink}</a>
+          </div>
+          <button onclick="navigator.clipboard.writeText('${item.shortLink}'); showToast();" class="mt-2 bg-black text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase hover:bg-yellow-400 hover:text-black border-2 border-transparent hover:border-black transition-colors w-full">Copy</button>
         </div>
       `).join('');
     }
 
     function filterHistory() {
       const query = document.getElementById('searchInput').value.toLowerCase();
-      const items = document.querySelectorAll('.filter-item');
-      items.forEach(item => {
-        const text = item.innerText.toLowerCase();
-        item.style.display = text.includes(query) ? "flex" : "none";
+      document.querySelectorAll('.filter-item').forEach(item => {
+        item.style.display = item.innerText.toLowerCase().includes(query) ? "flex" : "none";
       });
     }
 
@@ -264,39 +311,13 @@
       document.getElementById('shortenerForm').classList.remove('hidden');
       document.getElementById('resultCard').classList.add('hidden');
     }
-
     function copyLink() {
       const copyText = document.getElementById('shortLink');
       copyText.select(); navigator.clipboard.writeText(copyText.value); showToast();
     }
-
     function showToast() {
       const toast = document.getElementById("toast");
       toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-    }
-
-    function saveToHistory(shortLink, title) {
-      let history = JSON.parse(localStorage.getItem('nexusHistory') || '[]');
-      if(!history.find(item => item.short === shortLink)){
-        history.unshift({ short: shortLink, title: title || 'Untitled' });
-        if(history.length > 5) history.pop();
-        localStorage.setItem('nexusHistory', JSON.stringify(history));
-      }
-      loadHistory();
-    }
-
-    function loadHistory() {
-      const historyList = document.getElementById('historyList');
-      const history = JSON.parse(localStorage.getItem('nexusHistory') || '[]');
-      if(history.length === 0) { historyList.innerHTML = '<p class="text-xs text-gray-400 font-bold col-span-full text-center py-4">No recent links.</p>'; return; }
-
-      historyList.innerHTML = history.map(item => `
-        <div class="bg-gray-50 p-3 rounded-xl border-2 border-gray-200 flex flex-col items-center text-center">
-          <p class="font-bold text-gray-900 text-xs truncate w-full">${item.title}</p>
-          <a href="${item.short}" target="_blank" class="text-[10px] font-black text-blue-600 truncate block hover:underline mt-1 w-full">${item.short}</a>
-          <button onclick="navigator.clipboard.writeText('${item.short}'); showToast();" class="mt-2 bg-black text-white px-3 py-1 rounded text-[10px] font-bold uppercase hover:bg-yellow-400 hover:text-black transition-colors w-full">Copy</button>
-        </div>
-      `).join('');
     }
   </script>
 </body>
