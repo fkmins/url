@@ -6,72 +6,71 @@
   <title>NexusLink | AI Shortener</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+    body { font-family: sans-serif; background-color: #f8fafc; }
     .btn-loader { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-10 px-4">
-  
-  <div class="glass-card rounded-2xl p-8 w-full max-w-md shadow-xl border border-gray-100 mb-8">
-    <div class="mb-8 border-b-2 border-gray-100 pb-4 text-center">
-      <h1 class="text-3xl font-extrabold tracking-tight text-gray-900"><span class="text-blue-600">Nexus</span>Link</h1>
-      <p class="text-gray-500 font-medium text-sm mt-1">Smart Enterprise Routing</p>
+  <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl border border-gray-100 mb-8">
+    
+    <div class="mb-8 border-b-4 border-black pb-4">
+      <h1 class="text-3xl font-extrabold tracking-tight"><span class="text-red-600">Nexus</span>Link</h1>
+      <p class="text-gray-500 font-semibold text-sm mt-1">Smart Enterprise Routing</p>
     </div>
 
-    <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4">
+    <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-5">
       <div>
-        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Target URL <span class="text-red-500">*</span></label>
-        <input type="url" id="originalUrl" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white focus:ring-0 transition-all outline-none" placeholder="https://example.com/long-url">
+        <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Target URL <span class="text-red-600">*</span></label>
+        <input type="url" id="originalUrl" required class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white transition-all outline-none" placeholder="https://example.com/long-url">
       </div>
       
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Custom Alias</label>
+          <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Custom Alias</label>
           <input type="text" id="customAlias" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white transition-all outline-none" placeholder="e.g. promo24">
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Link Title</label>
-          <input type="text" id="linkTitle" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white transition-all outline-none" placeholder="Auto-fetch...">
+          <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Link Title <span class="text-blue-600 lowercase font-semibold">(Auto)</span></label>
+          <input type="text" id="linkTitle" class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white transition-all outline-none" placeholder="Smart Agent...">
         </div>
       </div>
 
-      <button type="submit" id="submitBtn" class="w-full bg-gray-900 hover:bg-blue-600 text-white font-bold py-4 rounded-xl transition-all flex justify-center items-center gap-2 mt-2 shadow-lg hover:shadow-blue-500/30">
+      <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-all flex justify-center items-center gap-2 mt-4">
         <span id="btnText">Generate Link</span>
         <div id="btnLoader" class="btn-loader"></div>
       </button>
     </form>
 
-    <div id="errorBox" class="hidden mt-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm font-bold text-center border border-red-200"></div>
-    
-    <!-- Result Card -->
-    <div id="resultCard" class="hidden mt-6 pt-6 border-t border-gray-100 animate-fade-in">
-      <div class="flex flex-col items-center mb-4">
-        <img id="qrCode" src="" alt="QR Code" class="w-32 h-32 rounded-lg border border-gray-200 p-1 shadow-sm mb-4">
-        <h3 id="resultTitle" class="text-sm font-bold text-gray-600 mb-2 truncate w-full text-center"></h3>
-      </div>
+    <div id="resultCard" class="hidden mt-6 pt-6 border-t-2 border-gray-100">
       
-      <div class="bg-blue-50 border border-blue-100 rounded-xl p-2 flex items-center justify-between gap-2 mb-4">
-        <input type="text" id="shortLink" readonly class="bg-transparent text-blue-700 font-bold w-full px-2 outline-none cursor-text truncate">
-        <button onclick="copyLink()" id="copyBtn" class="shrink-0 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white font-semibold text-sm transition-colors">Copy</button>
+      <!-- QR Code Display -->
+      <div class="flex flex-col items-center justify-center mb-5">
+        <img id="qrCode" src="" alt="QR Code" class="w-32 h-32 border-2 border-gray-200 rounded-lg p-1 mb-2">
+        <p id="resultTitle" class="text-xs font-bold text-gray-500 uppercase tracking-wide truncate w-full text-center"></p>
       </div>
-      <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl text-sm transition-colors">Create Another</button>
+
+      <div class="bg-blue-50 border-2 border-blue-100 rounded-xl p-3 flex items-center justify-between gap-3 mb-4">
+        <input type="text" id="shortLink" readonly class="bg-transparent text-blue-700 font-bold w-full px-2 outline-none cursor-text text-lg truncate">
+        <button onclick="copyLink()" id="copyBtn" class="shrink-0 bg-blue-600 hover:bg-black p-3 rounded-lg text-white font-bold transition-colors">Copy</button>
+      </div>
+      <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 rounded-xl text-sm transition-colors">Create Another</button>
     </div>
+    
+    <div id="errorBox" class="hidden mt-4 bg-red-100 text-red-900 p-3 rounded-lg text-sm font-bold text-center border-2 border-red-200"></div>
   </div>
 
   <!-- Local History -->
   <div class="w-full max-w-md">
-    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-2">Your Recent Links</h3>
-    <div id="historyList" class="space-y-2">
+    <h3 class="text-xs font-bold text-gray-500 uppercase mb-3 pl-1">Your Recent Links</h3>
+    <div id="historyList" class="space-y-3">
       <!-- Injected via JS -->
     </div>
   </div>
 
   <script>
-    const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_WEB_APP_URL_HERE'; // Replace with new deployment URL
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec'; 
 
-    // Load History on boot
     document.addEventListener("DOMContentLoaded", loadHistory);
 
     async function handleSubmit() {
@@ -81,6 +80,7 @@
       
       const btn = document.getElementById('submitBtn');
       const errorBox = document.getElementById('errorBox');
+      const resultCard = document.getElementById('resultCard');
 
       errorBox.classList.add('hidden');
       btn.disabled = true; 
@@ -89,7 +89,7 @@
 
       try {
         const params = new URLSearchParams({
-          action: 'create', url: url, title: title, alias: alias, domain: window.location.href.split('?')[0] // auto-detects your github pages domain
+          action: 'create', url: url, title: title, alias: alias, domain: "https://fkmins.github.io/url/"
         });
 
         const response = await fetch(`${SCRIPT_URL}?${params.toString()}`);
@@ -103,26 +103,21 @@
            errorBox.innerText = res.message; 
            errorBox.classList.remove('hidden');
         } else {
-           showSuccess(res.shortLink, res.title);
+           document.getElementById('shortLink').value = res.shortLink;
+           document.getElementById('resultTitle').innerText = res.title;
+           document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(res.shortLink)}`;
+           
+           resultCard.classList.remove('hidden');
+           document.getElementById('shortenerForm').classList.add('hidden');
            saveToHistory(res.shortLink, res.title, url);
         }
       } catch (err) {
         btn.disabled = false; 
         document.getElementById('btnText').innerText = 'Generate Link';
         document.getElementById('btnLoader').style.display = 'none';
-        errorBox.innerText = 'Network Error. Please try again.'; 
+        errorBox.innerText = 'Network Error. Check console.'; 
         errorBox.classList.remove('hidden');
       }
-    }
-
-    function showSuccess(shortLink, title) {
-      document.getElementById('shortLink').value = shortLink;
-      document.getElementById('resultTitle').innerText = title;
-      // Generate QR Code via free API
-      document.getElementById('qrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(shortLink)}`;
-      
-      document.getElementById('shortenerForm').classList.add('hidden');
-      document.getElementById('resultCard').classList.remove('hidden');
     }
 
     function resetForm() {
@@ -139,13 +134,11 @@
       document.getElementById('copyBtn').innerText = 'Copied!';
     }
 
-    // Local Storage History Management
     function saveToHistory(shortLink, title, targetUrl) {
       let history = JSON.parse(localStorage.getItem('nexusHistory') || '[]');
-      // Avoid duplicate history entries
       if(!history.find(item => item.short === shortLink)){
-        history.unshift({ short: shortLink, title: title || 'Link', original: targetUrl, date: new Date().toLocaleDateString() });
-        if(history.length > 5) history.pop(); // Keep only last 5
+        history.unshift({ short: shortLink, title: title || 'Untitled', original: targetUrl });
+        if(history.length > 5) history.pop();
         localStorage.setItem('nexusHistory', JSON.stringify(history));
       }
       loadHistory();
@@ -156,18 +149,18 @@
       const history = JSON.parse(localStorage.getItem('nexusHistory') || '[]');
       
       if(history.length === 0) {
-        historyList.innerHTML = '<p class="text-sm text-gray-400 text-center italic mt-4">No links created yet.</p>';
+        historyList.innerHTML = '<p class="text-sm text-gray-400 font-semibold mt-2">No links created yet.</p>';
         return;
       }
 
       historyList.innerHTML = history.map(item => `
-        <div class="bg-white p-3 rounded-xl border border-gray-100 shadow-sm flex justify-between items-center hover:shadow-md transition-shadow">
+        <div class="bg-white p-4 rounded-xl border-2 border-gray-200 flex justify-between items-center">
           <div class="overflow-hidden pr-3">
-            <p class="font-bold text-gray-800 text-sm truncate">${item.title}</p>
-            <a href="${item.short}" target="_blank" class="text-xs text-blue-600 truncate block hover:underline">${item.short}</a>
+            <p class="font-bold text-gray-900 text-sm truncate">${item.title}</p>
+            <a href="${item.short}" target="_blank" class="text-xs font-semibold text-blue-600 truncate block hover:underline mt-1">${item.short}</a>
           </div>
-          <button onclick="navigator.clipboard.writeText('${item.short}'); alert('Copied to clipboard!')" class="text-gray-400 hover:text-gray-800">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          <button onclick="navigator.clipboard.writeText('${item.short}'); alert('Copied to clipboard!')" class="text-gray-400 hover:text-black shrink-0 font-bold text-xs uppercase">
+            Copy
           </button>
         </div>
       `).join('');
