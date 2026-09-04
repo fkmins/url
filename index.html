@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NexusLink | AI Shortener</title>
+  <link rel="icon" href="https://web.dev/static/articles/building/an-adaptive-favicon/image/example-light-theme-favic-d92b9def036e6.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; min-height: 100vh; }
+    body { font-family: sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-y: auto; }
     
     .bg-wolf { position: fixed; inset: 0; z-index: -2; background-image: url('https://img.magnific.com/free-vector/hand-drawn-wolf-head-silhouette_23-2150523847.jpg'); background-size: cover; background-position: center; }
     .bg-overlay { position: fixed; inset: 0; z-index: -1; background-color: rgba(0, 0, 0, 0.7); }
@@ -27,18 +28,17 @@
     #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
   </style>
 </head>
-<body class="flex flex-col items-center justify-center p-4">
+<body class="flex flex-col items-center py-8 px-4">
 
   <div class="bg-wolf"></div>
   <div class="bg-overlay"></div>
   <div class="snow"></div>
 
   <!-- AUTH SCREEN -->
-  <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200 mt-10">
-    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase inline-block">NexusLink</h1>
-    <p class="text-gray-600 font-bold mb-6">Enterprise Access Restricted.</p>
+  <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl text-center border-4 border-gray-200 mt-4 hidden">
+    <h1 class="text-2xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-2 rounded-xl bg-black mb-4 uppercase inline-block">NexusLink</h1>
+    <p class="text-gray-600 font-bold mb-6 text-sm">Enterprise Access Restricted.</p>
     
-    <!-- FIX YOUR 401 ERROR BY PASTING YOUR CLIENT ID BELOW -->
     <div id="g_id_onload"
          data-client_id="1024803666625-2dsd2ebgn5h4s6pg085bmssbk4kmqdbs.apps.googleusercontent.com" 
          data-context="signin"
@@ -53,48 +53,53 @@
   </div>
 
   <!-- MAIN APP SCREEN -->
-  <div id="appScreen" class="relative z-10 w-full max-w-md hidden mt-8">
-    <div class="bg-white rounded-3xl p-8 shadow-2xl border-4 border-gray-200 mb-8 text-center">
-      <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase shadow-lg inline-block">NexusLink</h1>
-      <p class="text-xs font-bold text-gray-400 mb-6 uppercase" id="userEmailDisplay"></p>
+  <div id="appScreen" class="relative z-10 w-full max-w-md hidden">
+    
+    <!-- Header Card -->
+    <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-gray-200 mb-6 text-center relative">
+      <button onclick="logout()" class="absolute top-4 right-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-600 transition-colors">Logout</button>
+      
+      <h1 class="text-2xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-2 rounded-xl bg-black mb-2 uppercase shadow-lg inline-block">NexusLink</h1>
+      <p class="text-[10px] font-bold text-gray-400 mb-4 uppercase tracking-widest truncate px-4" id="userEmailDisplay"></p>
 
-      <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4 text-center">
+      <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-3 text-center">
         <div>
-          <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Target URL <span class="text-red-600">*</span></label>
-          <input type="url" id="originalUrl" required class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none" placeholder="https://example.com/long-url">
+          <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Target URL <span class="text-red-600">*</span></label>
+          <input type="url" id="originalUrl" required class="w-full text-center border-2 border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="https://example.com/long-url">
         </div>
         
-        <div>
-          <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Custom Alias</label>
-          <input type="text" id="customAlias" class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none" placeholder="e.g. promo24">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Custom Alias</label>
+            <input type="text" id="customAlias" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="promo24">
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Link Title</label>
+            <input type="text" id="linkTitle" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="Auto Fetch">
+          </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-gray-900 uppercase mb-2">Link Title <span class="text-blue-600 lowercase font-semibold">(Auto)</span></label>
-          <input type="text" id="linkTitle" class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none" placeholder="Smart Agent...">
-        </div>
-
-        <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-yellow-400 hover:text-black border-2 border-black text-white font-black py-4 rounded-xl transition-all flex justify-center items-center gap-2 mt-4 uppercase tracking-widest shadow-lg">
+        <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-yellow-400 hover:text-black border-2 border-black text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 mt-2 uppercase tracking-widest shadow-lg text-sm">
           <span id="btnText">Generate Link</span>
           <div id="btnLoader" class="btn-loader"></div>
         </button>
       </form>
 
-      <div id="resultCard" class="hidden mt-6 pt-6 border-t-2 border-gray-100 text-center">
-        <p id="resultTitle" class="text-sm font-bold text-gray-500 uppercase tracking-wide truncate w-full mb-4"></p>
-        <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 flex flex-col items-center gap-3 mb-4 shadow-sm">
-          <input type="text" id="shortLink" readonly class="bg-transparent text-black font-black w-full text-center outline-none cursor-text text-lg truncate">
-          <button onclick="copyLink()" class="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors uppercase border-2 border-black">Copy Link</button>
+      <div id="resultCard" class="hidden mt-4 pt-4 border-t-2 border-gray-100 text-center">
+        <p id="resultTitle" class="text-[10px] font-bold text-gray-500 uppercase tracking-wide truncate w-full mb-3"></p>
+        <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-2 flex flex-col items-center gap-2 mb-3 shadow-sm">
+          <input type="text" id="shortLink" readonly class="bg-transparent text-black font-black w-full text-center outline-none cursor-text text-sm truncate">
+          <button onclick="copyLink()" class="w-full bg-black text-white font-bold py-2 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors uppercase border-2 border-black text-xs">Copy Link</button>
         </div>
-        <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 rounded-xl text-sm transition-colors uppercase">Create Another</button>
+        <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-2 rounded-xl text-xs transition-colors uppercase">Create Another</button>
       </div>
-      <div id="errorBox" class="hidden mt-4 bg-red-100 text-red-900 p-3 rounded-lg text-sm font-bold text-center border-2 border-red-200"></div>
+      <div id="errorBox" class="hidden mt-3 bg-red-100 text-red-900 p-2 rounded-lg text-xs font-bold text-center border-2 border-red-200"></div>
     </div>
 
     <!-- HISTORY -->
-    <div class="w-full text-center bg-white/95 p-6 rounded-3xl border-4 border-gray-200 shadow-2xl">
-      <h3 class="text-sm font-black text-black uppercase tracking-widest mb-4">Your Recent Links</h3>
-      <div id="historyList" class="space-y-3"></div>
+    <div class="w-full text-center bg-white/95 p-5 rounded-3xl border-4 border-gray-200 shadow-2xl">
+      <h3 class="text-xs font-black text-black uppercase tracking-widest mb-3">Your Recent Links</h3>
+      <div id="historyList" class="space-y-2"></div>
     </div>
   </div>
 
@@ -102,7 +107,40 @@
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec'; 
+    const SESSION_DURATION = 10 * 60 * 1000; // 10 minutes
     let currentUserEmail = "";
+
+    // Ping server immediately on page load to wake up Google Apps Script (fixes Cold Start)
+    window.onload = () => {
+      fetch(`${SCRIPT_URL}?action=ping`).catch(()=>'');
+      checkSession();
+    };
+
+    function checkSession() {
+      const sessionStr = localStorage.getItem('nexusSession');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        if (Date.now() - session.timestamp < SESSION_DURATION) {
+          // Valid session, bypass login (0 seconds)
+          currentUserEmail = session.email;
+          document.getElementById('userEmailDisplay').innerText = `Logged in as: ${currentUserEmail}`;
+          document.getElementById('authScreen').classList.add('hidden');
+          document.getElementById('appScreen').classList.remove('hidden');
+          loadHistory();
+          return;
+        }
+      }
+      // Show login if no valid session
+      document.getElementById('authScreen').classList.remove('hidden');
+    }
+
+    function logout() {
+      localStorage.removeItem('nexusSession');
+      currentUserEmail = "";
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('authError').classList.add('hidden');
+    }
 
     function decodeJwtResponse(token) {
       let base64Url = token.split('.')[1];
@@ -113,22 +151,21 @@
 
     async function handleCredentialResponse(response) {
       const payload = decodeJwtResponse(response.credential);
-      currentUserEmail = payload.email;
+      const email = payload.email;
       
       document.getElementById('authError').classList.add('hidden');
       document.getElementById('authLoader').classList.remove('hidden');
 
       try {
-        const res = await fetch(`${SCRIPT_URL}?action=verify&email=${encodeURIComponent(currentUserEmail)}`);
+        const res = await fetch(`${SCRIPT_URL}?action=verify&email=${encodeURIComponent(email)}`);
         const data = await res.json();
         
         document.getElementById('authLoader').classList.add('hidden');
         
         if (data.success) {
-          document.getElementById('authScreen').classList.add('hidden');
-          document.getElementById('appScreen').classList.remove('hidden');
-          document.getElementById('userEmailDisplay').innerText = `Logged in as: ${currentUserEmail}`;
-          loadHistory();
+          // Save valid session securely for 10 mins
+          localStorage.setItem('nexusSession', JSON.stringify({ email: email, timestamp: Date.now() }));
+          checkSession(); // Re-trigger the UI change instantly
         } else {
           document.getElementById('authError').innerText = data.message;
           document.getElementById('authError').classList.remove('hidden');
@@ -161,6 +198,9 @@
         if (!res.success) {
            errorBox.innerText = res.message; errorBox.classList.remove('hidden');
         } else {
+           // Refresh session timer on activity
+           localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
+           
            document.getElementById('shortLink').value = res.shortLink;
            document.getElementById('resultTitle').innerText = res.title;
            resultCard.classList.remove('hidden'); document.getElementById('shortenerForm').classList.add('hidden');
@@ -202,13 +242,13 @@
     function loadHistory() {
       const historyList = document.getElementById('historyList');
       const history = JSON.parse(localStorage.getItem('nexusHistory') || '[]');
-      if(history.length === 0) { historyList.innerHTML = '<p class="text-sm text-gray-500 font-semibold mt-2">No links created yet.</p>'; return; }
+      if(history.length === 0) { historyList.innerHTML = '<p class="text-xs text-gray-500 font-bold mt-2">No links created yet.</p>'; return; }
 
       historyList.innerHTML = history.map(item => `
-        <div class="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 flex flex-col items-center text-center">
-          <p class="font-bold text-gray-900 text-sm truncate w-full">${item.title}</p>
-          <a href="${item.short}" target="_blank" class="text-xs font-black text-blue-600 truncate block hover:underline mt-1 w-full">${item.short}</a>
-          <button onclick="navigator.clipboard.writeText('${item.short}'); showToast();" class="mt-3 bg-black text-white px-4 py-2 rounded-lg text-xs font-bold uppercase hover:bg-yellow-400 hover:text-black border-2 border-black transition-colors w-full">Copy</button>
+        <div class="bg-gray-50 p-3 rounded-lg border-2 border-gray-200 flex flex-col items-center text-center">
+          <p class="font-bold text-gray-900 text-xs truncate w-full">${item.title}</p>
+          <a href="${item.short}" target="_blank" class="text-[10px] font-black text-blue-600 truncate block hover:underline mt-1 w-full">${item.short}</a>
+          <button onclick="navigator.clipboard.writeText('${item.short}'); showToast();" class="mt-2 bg-black text-white px-3 py-1 rounded text-[10px] font-bold uppercase hover:bg-yellow-400 hover:text-black border-2 border-transparent hover:border-black transition-colors w-full">Copy</button>
         </div>
       `).join('');
     }
