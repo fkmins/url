@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Routing | NexusLink</title>
+  <title>Routing | Linker</title>
   
-  <!-- Universal Open Graph Tags for Social Media Previews -->
-  <meta property="og:title" content="NexusLink | Enterprise Router">
+  <meta property="og:title" content="Linker | Enterprise Router">
   <meta property="og:description" content="Securely routing to destination...">
   <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Flipkart_Minutes_logo.png/800px-Flipkart_Minutes_logo.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -30,26 +29,40 @@
 
   <div class="bg-watermark"></div>
 
-  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl">
+  <!-- Loading State -->
+  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[300px]">
     <div class="loader"></div>
-    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-4 uppercase inline-block shadow-lg">NexusLink</h1>
-    <p class="text-gray-900 mt-2 font-bold uppercase tracking-widest text-xs" id="statusText">Locating Target...</p>
+    <p class="text-gray-900 mt-4 font-black uppercase tracking-widest text-sm" id="statusText">Locating Target...</p>
   </div>
 
+  <!-- Error State (Cleaned per request) -->
   <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-sm w-full border-4 border-gray-200 shadow-2xl">
-    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase inline-block shadow-lg">NexusLink</h1>
-    <h2 class="text-xl font-black text-red-600 mb-2 uppercase">Link Inactive</h2>
-    <p class="text-gray-600 mb-8 font-bold text-xs" id="errorReason">This link has expired, was typed incorrectly, or was permanently deleted by the creator.</p>
-    <a href="/url/" class="block w-full bg-black text-white px-4 py-4 rounded-xl font-black uppercase tracking-widest hover:bg-yellow-400 hover:text-black border-2 border-black transition-colors shadow-lg text-sm">Create a Link</a>
+    <div class="mb-4 text-red-500 flex justify-center">
+       <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    </div>
+    <h2 class="text-2xl font-black text-red-600 mb-2 uppercase tracking-widest border-b-2 border-red-100 pb-2">Link Inactive</h2>
+    <p class="text-gray-600 mt-4 font-bold text-sm" id="errorReason">This URL is expired, invalid, or has been permanently deleted.</p>
   </div>
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
 
     async function routeUser() {
-      const pathSegments = window.location.pathname.split('/').filter(p => p);
-      const shortCode = pathSegments[pathSegments.length - 1];
+      // Robust URL Extraction (protects against GitHub Pages URL parameter mangling)
+      let shortCode = new URLSearchParams(window.location.search).get('code');
+      
+      if (!shortCode) {
+         const cleanPath = window.location.pathname.replace(/\/$/, ''); // Remove trailing slash
+         const pathSegments = cleanPath.split('/');
+         shortCode = pathSegments[pathSegments.length - 1];
+      }
+      
+      // If deployed as ?[code] instead of ?code=[code]
+      if (!shortCode && window.location.search.length > 1 && !window.location.search.includes('=')) {
+         shortCode = window.location.search.substring(1);
+      }
 
+      // Security / Base Path validation
       if (!shortCode || shortCode === 'url' || shortCode.includes('.html')) return showError();
 
       try {
@@ -60,14 +73,19 @@
           document.getElementById('statusText').innerText = "Target acquired. Redirecting...";
           document.getElementById('statusText').classList.replace('text-gray-900', 'text-yellow-500');
           window.location.replace(data.url);
-        } else showError(); // Specifically handles the "Deleted/Deactivated" response
-      } catch (err) { showError(); }
+        } else {
+          showError(); 
+        }
+      } catch (err) { 
+        showError(); 
+      }
     }
 
     function showError() {
       document.getElementById('loadingUI').classList.add('hidden');
       document.getElementById('errorUI').classList.remove('hidden');
     }
+    
     routeUser();
   </script>
 </body>
