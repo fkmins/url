@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Routing | Linker</title>
   
-  <meta property="og:title" content="Linker | Enterprise Router">
+  <meta property="og:title" content="Linker Router">
   <meta property="og:description" content="Securely routing to destination...">
   <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Flipkart_Minutes_logo.png/800px-Flipkart_Minutes_logo.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -13,15 +13,15 @@
   <link rel="icon" href="https://web.dev/static/articles/building/an-adaptive-favicon/image/example-light-theme-favic-d92b9def036e6.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-y: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background-color: #ffffff;}
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background-color: #ffffff;}
     
     .bg-watermark {
       position: fixed; inset: 0; z-index: -2;
       background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Flipkart_Minutes_logo.png/800px-Flipkart_Minutes_logo.png');
-      background-size: 300px; background-position: center; background-repeat: no-repeat; opacity: 0.15;
+      background-size: 300px; background-position: center; background-repeat: no-repeat; opacity: 0.12;
     }
 
-    .loader { border: 4px solid rgba(0,0,0,0.1); border-top-color: #facc15; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    .loader { border: 4px solid rgba(0,0,0,0.1); border-top-color: #facc15; border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
@@ -29,44 +29,43 @@
 
   <div class="bg-watermark"></div>
 
-  <!-- Loading State -->
-  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[300px]">
+  <!-- Loading UI -->
+  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[280px]">
     <div class="loader"></div>
-    <p class="text-gray-900 mt-4 font-black uppercase tracking-widest text-sm" id="statusText">Locating Target...</p>
+    <p class="text-gray-900 font-black uppercase tracking-widest text-xs" id="statusText">Locating Target...</p>
   </div>
 
-  <!-- Error State (Cleaned per request) -->
-  <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-sm w-full border-4 border-gray-200 shadow-2xl">
-    <div class="mb-4 text-red-500 flex justify-center">
-       <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+  <!-- Error UI -->
+  <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-xs w-full border-4 border-gray-200 shadow-2xl">
+    <div class="mb-3 text-red-500 flex justify-center">
+       <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
     </div>
-    <h2 class="text-2xl font-black text-red-600 mb-2 uppercase tracking-widest border-b-2 border-red-100 pb-2">Link Inactive</h2>
-    <p class="text-gray-600 mt-4 font-bold text-sm" id="errorReason">This URL is expired, invalid, or has been permanently deleted.</p>
+    <h2 class="text-xl font-black text-red-600 mb-2 uppercase tracking-widest border-b-2 border-red-100 pb-2">Link Inactive</h2>
+    <p class="text-gray-600 mt-3 font-bold text-xs leading-relaxed" id="errorReason">This URL is expired, invalid, or has been permanently deleted.</p>
   </div>
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
 
     async function routeUser() {
-      // Robust URL Extraction (protects against GitHub Pages URL parameter mangling)
       let shortCode = new URLSearchParams(window.location.search).get('code');
       
       if (!shortCode) {
-         const cleanPath = window.location.pathname.replace(/\/$/, ''); // Remove trailing slash
-         const pathSegments = cleanPath.split('/');
+         const cleanPath = window.location.pathname.replace(/\/$/, '');
+         const pathSegments = cleanPath.split('/').filter(p => p);
          shortCode = pathSegments[pathSegments.length - 1];
       }
       
-      // If deployed as ?[code] instead of ?code=[code]
       if (!shortCode && window.location.search.length > 1 && !window.location.search.includes('=')) {
          shortCode = window.location.search.substring(1);
       }
 
-      // Security / Base Path validation
-      if (!shortCode || shortCode === 'url' || shortCode.includes('.html')) return showError();
+      if (!shortCode || shortCode.toLowerCase() === 'url' || shortCode.includes('.html')) {
+        return showError();
+      }
 
       try {
-        const response = await fetch(`${SCRIPT_URL}?code=${shortCode}`);
+        const response = await fetch(`${SCRIPT_URL}?code=${encodeURIComponent(shortCode)}`);
         const data = await response.json();
 
         if (data.success && data.url) {
