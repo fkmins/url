@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Routing | Linker</title>
-  
+
   <meta property="og:title" content="Linker Router">
   <meta property="og:description" content="Securely routing to destination...">
   <meta property="og:image" content="https://img.magnific.com/free-vector/hand-drawn-kitsune-mask-illustration_23-2149367767.jpg">
@@ -14,7 +14,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem; background-color: #ffffff;}
-    
+
     .bg-watermark {
       position: fixed; inset: 0; z-index: -2;
       background-image: url('https://img.magnific.com/free-vector/hand-drawn-kitsune-mask-illustration_23-2149367767.jpg');
@@ -49,13 +49,13 @@
 
     async function routeUser() {
       let shortCode = new URLSearchParams(window.location.search).get('code');
-      
+
       if (!shortCode) {
          const cleanPath = window.location.pathname.replace(/\/$/, '');
          const pathSegments = cleanPath.split('/').filter(p => p);
          shortCode = pathSegments[pathSegments.length - 1];
       }
-      
+
       if (!shortCode && window.location.search.length > 1 && !window.location.search.includes('=')) {
          shortCode = window.location.search.substring(1);
       }
@@ -65,7 +65,11 @@
       }
 
       try {
-        const response = await fetch(`${SCRIPT_URL}?code=${encodeURIComponent(shortCode)}`);
+        // cache:'no-store' + a timestamp cache-buster: this endpoint must
+        // never serve a browser/proxy-cached response for a code that was
+        // just edited or deleted, so every visit is a genuinely fresh hit.
+        const url = `${SCRIPT_URL}?code=${encodeURIComponent(shortCode)}&_ts=${Date.now()}`;
+        const response = await fetch(url, { cache: 'no-store' });
         const data = await response.json();
 
         if (data.success && data.url) {
@@ -73,10 +77,10 @@
           document.getElementById('statusText').classList.replace('text-gray-900', 'text-yellow-500');
           window.location.replace(data.url);
         } else {
-          showError(); 
+          showError();
         }
-      } catch (err) { 
-        showError(); 
+      } catch (err) {
+        showError();
       }
     }
 
@@ -85,7 +89,7 @@
       document.getElementById('errorUI').classList.remove('hidden');
       document.getElementById('errorUI').classList.add('flex');
     }
-    
+
     routeUser();
   </script>
 </body>
