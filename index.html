@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexusLink | AI Shortener</title>
+  <title>Linker | AI Shortener</title>
   <link rel="icon" href="https://web.dev/static/articles/building/an-adaptive-favicon/image/example-light-theme-favic-d92b9def036e6.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-y: auto; }
+    body { font-family: sans-serif; margin: 0; padding: 0; min-height: 100vh; overflow-y: auto; overflow-x: hidden; }
     
     .bg-wolf { position: fixed; inset: 0; z-index: -2; background-image: url('https://img.magnific.com/free-vector/hand-drawn-wolf-head-silhouette_23-2150523847.jpg'); background-size: cover; background-position: center; }
     .bg-overlay { position: fixed; inset: 0; z-index: -1; background-color: rgba(0, 0, 0, 0.75); }
@@ -36,9 +36,7 @@
 
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200 mt-10 hidden">
-    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-6 uppercase inline-block">NexusLink</h1>
-    <p class="text-gray-600 font-bold mb-6 text-sm">Enterprise Access Restricted.</p>
-    
+    <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-3 rounded-xl bg-black mb-10 uppercase inline-block shadow-lg">Linker</h1>
     <div id="g_id_onload"
          data-client_id="1024803666625-2dsd2ebgn5h4s6pg085bmssbk4kmqdbs.apps.googleusercontent.com" 
          data-context="signin"
@@ -49,94 +47,104 @@
     <div class="g_id_signin flex justify-center" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
   </div>
 
-  <!-- MAIN APP SCREEN -->
-  <div id="appScreen" class="relative z-10 w-full max-w-2xl hidden">
-    
-    <!-- Header Card -->
-    <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-gray-200 mb-6 text-center relative max-w-md mx-auto">
-      <button onclick="logout()" class="absolute top-4 right-4 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-600 transition-colors">Logout</button>
-      
-      <h1 class="text-2xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-2 rounded-xl bg-black mb-6 uppercase shadow-lg inline-block">NexusLink</h1>
-
-      <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4 text-center">
-        <div>
-          <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Target URL <span class="text-red-600">*</span></label>
-          <input type="url" id="originalUrl" required class="w-full text-center border-2 border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="https://example.com/long-url">
-        </div>
-        
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Custom Alias</label>
-            <input type="text" id="customAlias" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="promo24">
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Link Title</label>
-            <input type="text" id="linkTitle" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="Auto Fetch">
-          </div>
-        </div>
-
-        <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-yellow-400 hover:text-black border-2 border-black text-white font-black py-3 rounded-xl transition-all flex justify-center items-center gap-2 mt-2 uppercase tracking-widest shadow-lg text-sm">
-          <span id="btnText">Generate Link</span>
-          <div id="btnLoader" class="btn-loader"></div>
-        </button>
-      </form>
-
-      <div id="resultCard" class="hidden mt-4 pt-4 border-t-2 border-gray-100 text-center">
-        <p id="resultTitle" class="text-[10px] font-bold text-gray-500 uppercase tracking-wide truncate w-full mb-3"></p>
-        <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-2 flex flex-col items-center gap-2 mb-3 shadow-sm">
-          <input type="text" id="shortLink" readonly class="bg-transparent text-black font-black w-full text-center outline-none cursor-text text-sm truncate">
-          <button onclick="copyLink()" class="w-full bg-black text-white font-bold py-2 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors uppercase border-2 border-black text-xs">Copy Link</button>
-        </div>
-        <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-2 rounded-xl text-xs transition-colors uppercase">Create Another</button>
+  <!-- UNAUTHORIZED MODAL -->
+  <div id="unauthorizedModal" class="fixed inset-0 z-50 bg-black/90 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-white max-w-md w-full rounded-3xl border-4 border-red-500 p-8 text-center relative shadow-[0_0_50px_rgba(239,68,68,0.4)]">
+      <h2 class="text-3xl font-black text-red-600 mb-2 uppercase tracking-widest">Access Denied</h2>
+      <div class="flex justify-center text-red-500 mb-6">
+        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
       </div>
-      <div id="errorBox" class="hidden mt-3 bg-red-100 text-red-900 p-2 rounded-lg text-xs font-bold text-center border-2 border-red-200"></div>
-    </div>
-
-    <!-- RECENT LINKS (Synced with Cloud) -->
-    <div class="w-full bg-white/95 p-6 rounded-3xl border-4 border-gray-200 shadow-2xl">
-      <div class="flex justify-between items-center mb-4 border-b-2 border-gray-200 pb-2">
-        <h3 class="text-xs font-black text-black uppercase tracking-widest">Recent Links</h3>
-        <button onclick="openHistoryModal()" class="text-[10px] bg-black text-white px-3 py-1 rounded-md uppercase font-bold hover:bg-yellow-400 hover:text-black transition-colors">Cloud History</button>
-      </div>
-      
-      <div id="recentListLoader" class="flex justify-center my-4 hidden">
-        <div class="btn-loader border-black border-t-yellow-400 w-6 h-6 border-4" style="display:block"></div>
-      </div>
-      
-      <div id="recentHistoryList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <!-- Injected via JS -->
-      </div>
+      <p class="text-gray-800 font-bold text-sm mb-8">Your account is outside the Allowed Emails perimeter. Access is permanently restricted.</p>
+      <button onclick="closeUnauthorizedModal()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl transition-colors uppercase tracking-widest text-sm shadow-md border-2 border-transparent hover:border-black">Return to Login</button>
     </div>
   </div>
 
-  <!-- FULL CLOUD HISTORY MODAL WITH CRUD -->
-  <div id="historyModal" class="fixed inset-0 z-50 bg-black/90 hidden flex flex-col items-center justify-center p-4 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-4xl h-[85vh] rounded-3xl border-4 border-yellow-400 p-6 flex flex-col relative shadow-2xl">
-      <button onclick="closeHistoryModal()" class="absolute top-4 right-4 bg-gray-200 hover:bg-red-500 hover:text-white rounded-full w-8 h-8 font-black transition-colors z-10">X</button>
+  <!-- MAIN APP SCREEN (WIDE DESKTOP LAYOUT) -->
+  <div id="appScreen" class="relative z-10 w-full max-w-6xl hidden">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       
-      <h2 class="text-xl font-black uppercase tracking-widest mb-4">Cloud Database History</h2>
-      
-      <input type="text" id="searchInput" onkeyup="filterHistory()" placeholder="Search titles, shortcodes, or target URLs..." class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 mb-4 outline-none focus:border-black font-medium">
-      
-      <div id="modalLoader" class="hidden flex-col items-center justify-center h-full">
-         <div class="btn-loader border-black border-t-yellow-400 w-10 h-10 border-4 mb-4" style="display:block"></div>
-         <p class="font-bold text-gray-500 uppercase tracking-widest text-xs">Syncing Database...</p>
+      <!-- LEFT COLUMN: Creation Engine -->
+      <div class="lg:col-span-4 flex flex-col">
+        <div class="bg-white rounded-3xl p-8 shadow-2xl border-4 border-gray-200 text-center relative">
+          <button onclick="logout(true)" class="absolute top-4 right-5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-600 transition-colors">Logout</button>
+          
+          <h1 class="text-2xl font-extrabold tracking-tight text-yellow-400 border-4 border-black p-2 rounded-xl bg-black mb-8 uppercase shadow-lg inline-block">Linker</h1>
+
+          <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-5 text-center">
+            <div>
+              <input type="url" id="originalUrl" required class="w-full text-center border-2 border-gray-300 rounded-xl px-4 py-4 bg-gray-50 text-black font-bold focus:border-blue-600 focus:bg-white outline-none text-sm shadow-inner" placeholder="Paste your long URL here...">
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Custom Alias</label>
+                <input type="text" id="customAlias" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="promo24">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Link Title</label>
+                <input type="text" id="linkTitle" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 text-black font-medium focus:border-blue-600 focus:bg-white outline-none text-sm" placeholder="Auto Fetch">
+              </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-yellow-400 hover:text-black border-2 border-black text-white font-black py-4 rounded-xl transition-all flex justify-center items-center gap-2 mt-2 uppercase tracking-widest shadow-lg text-sm">
+              <span id="btnText">Generate Link</span>
+              <div id="btnLoader" class="btn-loader"></div>
+            </button>
+          </form>
+
+          <div id="resultCard" class="hidden mt-6 pt-6 border-t-2 border-gray-100 text-center">
+            <p id="resultTitle" class="text-xs font-black text-gray-700 uppercase tracking-wide truncate w-full mb-4"></p>
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 flex flex-col items-center gap-3 mb-4 shadow-sm">
+              <input type="text" id="shortLink" readonly class="bg-transparent text-black font-black w-full text-center outline-none cursor-text text-base truncate">
+              <button onclick="copyLink()" class="w-full bg-black text-white font-bold py-3 rounded-lg hover:bg-yellow-400 hover:text-black transition-colors uppercase border-2 border-black text-xs tracking-widest shadow-md">Copy Link</button>
+            </div>
+            <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-3 rounded-xl text-xs transition-colors uppercase tracking-widest border-2 border-transparent">Create Another</button>
+          </div>
+          <div id="errorBox" class="hidden mt-4 bg-red-100 text-red-900 p-3 rounded-xl text-xs font-bold text-center border-2 border-red-200"></div>
+        </div>
       </div>
 
-      <div id="fullHistoryContainer" class="flex-1 overflow-y-auto space-y-3 pr-2">
-        <!-- Injected via JS -->
+      <!-- RIGHT COLUMN: Fully Integrated Database History -->
+      <div class="lg:col-span-8 flex flex-col h-full">
+        <div class="w-full bg-white/95 p-6 rounded-3xl border-4 border-gray-200 shadow-2xl h-full flex flex-col min-h-[500px]">
+          
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-black text-black uppercase tracking-widest">Cloud Database</h3>
+            <span class="text-[10px] bg-green-100 text-green-800 px-3 py-1 rounded-full uppercase font-bold border border-green-300">Live Sync</span>
+          </div>
+          
+          <input type="text" id="searchInput" onkeyup="filterHistory()" placeholder="Search titles, shortcodes, or target URLs..." class="w-full border-2 border-gray-300 rounded-xl px-4 py-3 mb-4 outline-none focus:border-black font-medium text-sm transition-colors shadow-inner">
+          
+          <div id="modalLoader" class="flex-col items-center justify-center h-full flex my-10">
+             <div class="btn-loader border-black border-t-yellow-400 w-10 h-10 border-4 mb-4" style="display:block"></div>
+             <p class="font-bold text-gray-500 uppercase tracking-widest text-xs">Syncing Database...</p>
+          </div>
+
+          <div id="fullHistoryContainer" class="flex-1 overflow-y-auto space-y-3 pr-2 hidden-scrollbar" style="max-height: 65vh;">
+            <!-- Injected via JS -->
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 
   <div id="toast">Copied!</div>
+
+  <style>
+     /* Hide scrollbar for a cleaner look */
+    .hidden-scrollbar::-webkit-scrollbar { width: 6px; }
+    .hidden-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .hidden-scrollbar::-webkit-scrollbar-thumb { background-color: #e5e7eb; border-radius: 20px; }
+  </style>
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec'; 
     let currentUserEmail = "";
 
     window.onload = () => {
-      fetch(`${SCRIPT_URL}?action=ping`).catch(()=>''); // Cold start wake
+      fetch(`${SCRIPT_URL}?action=ping`).catch(()=>''); 
       const sessionStr = localStorage.getItem('nexusSession');
       if (sessionStr) {
         const session = JSON.parse(sessionStr);
@@ -144,7 +152,7 @@
           currentUserEmail = session.email;
           document.getElementById('authScreen').classList.add('hidden');
           document.getElementById('appScreen').classList.remove('hidden');
-          syncCloudData(); // Replaces local storage logic completely
+          syncCloudData(); 
         } else {
           document.getElementById('authScreen').classList.remove('hidden');
         }
@@ -153,11 +161,25 @@
       }
     };
 
-    function logout() {
+    function triggerUnauthorized() {
+      localStorage.removeItem('nexusSession');
+      currentUserEmail = "";
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('authScreen').classList.add('hidden');
+      document.getElementById('unauthorizedModal').classList.remove('hidden');
+    }
+
+    function closeUnauthorizedModal() {
+      document.getElementById('unauthorizedModal').classList.add('hidden');
+      document.getElementById('authScreen').classList.remove('hidden');
+    }
+
+    function logout(manual = false) {
       localStorage.removeItem('nexusSession');
       currentUserEmail = "";
       document.getElementById('appScreen').classList.add('hidden');
       document.getElementById('authScreen').classList.remove('hidden');
+      document.getElementById('fullHistoryContainer').innerHTML = "";
     }
 
     function handleCredentialResponse(response) {
@@ -165,7 +187,6 @@
       let payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
       
       currentUserEmail = payload.email;
-      localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
       
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('appScreen').classList.remove('hidden');
@@ -188,7 +209,10 @@
         const res = await response.json();
         
         if (!res.success) {
-           if(res.message.includes("Unauthorized")) logout(); 
+           if(res.message.includes("Unauthorized")) {
+             triggerUnauthorized();
+             return;
+           }
            errorBox.innerText = res.message; errorBox.classList.remove('hidden');
         } else {
            localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
@@ -196,7 +220,7 @@
            document.getElementById('resultTitle').innerText = res.title;
            document.getElementById('resultCard').classList.remove('hidden'); 
            document.getElementById('shortenerForm').classList.add('hidden');
-           syncCloudData(); // Sync instantly
+           syncCloudData(); 
         }
       } catch (err) {
         errorBox.innerText = 'Network Error. Check console.'; errorBox.classList.remove('hidden');
@@ -205,17 +229,10 @@
       }
     }
 
-    // CLOUD SYNC LOGIC (Replaces Local Storage)
-    async function syncCloudData(openModal = false) {
-      if(openModal) {
-        document.getElementById('historyModal').classList.remove('hidden');
-        document.getElementById('fullHistoryContainer').innerHTML = "";
-        document.getElementById('modalLoader').classList.remove('hidden');
-        document.getElementById('modalLoader').classList.add('flex');
-      } else {
-        document.getElementById('recentHistoryList').innerHTML = "";
-        document.getElementById('recentListLoader').classList.remove('hidden');
-      }
+    async function syncCloudData() {
+      document.getElementById('fullHistoryContainer').innerHTML = "";
+      document.getElementById('modalLoader').classList.remove('hidden');
+      document.getElementById('modalLoader').classList.add('flex');
 
       try {
         const response = await fetch(`${SCRIPT_URL}?action=history&email=${encodeURIComponent(currentUserEmail)}`);
@@ -223,78 +240,61 @@
         
         document.getElementById('modalLoader').classList.add('hidden');
         document.getElementById('modalLoader').classList.remove('flex');
-        document.getElementById('recentListLoader').classList.add('hidden');
 
         if(res.success) {
+          localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
           renderCloudHistory(res.history);
-          renderRecentLinks(res.history.slice(0, 4)); // Show top 4 on dashboard
         } else if (res.message.includes("Unauthorized")) {
-          logout();
+          triggerUnauthorized();
         }
       } catch(e) {
         document.getElementById('modalLoader').classList.add('hidden');
-        document.getElementById('recentListLoader').classList.add('hidden');
       }
     }
 
-    function openHistoryModal() { syncCloudData(true); }
-    function closeHistoryModal() { document.getElementById('historyModal').classList.add('hidden'); }
-
-    // CRUD: Delete
     async function deleteLink(code) {
       if(!confirm(`Are you sure you want to permanently delete /${code}?`)) return;
-      openHistoryModal(); // show loader
+      document.getElementById('fullHistoryContainer').innerHTML = "";
+      document.getElementById('modalLoader').classList.remove('hidden');
+      document.getElementById('modalLoader').classList.add('flex');
+      
       await fetch(`${SCRIPT_URL}?action=delete&code=${code}&email=${encodeURIComponent(currentUserEmail)}`);
-      syncCloudData(true); // reload data
+      syncCloudData();
     }
 
-    // CRUD: Update
     async function editLink(code, oldUrl) {
       const newUrl = prompt(`Enter new Target URL for /${code}:`, oldUrl);
       if(!newUrl || newUrl === oldUrl) return;
-      openHistoryModal(); // show loader
+      
+      document.getElementById('fullHistoryContainer').innerHTML = "";
+      document.getElementById('modalLoader').classList.remove('hidden');
+      document.getElementById('modalLoader').classList.add('flex');
+      
       await fetch(`${SCRIPT_URL}?action=update&code=${code}&url=${encodeURIComponent(newUrl)}&email=${encodeURIComponent(currentUserEmail)}`);
-      syncCloudData(true);
+      syncCloudData();
     }
 
     function renderCloudHistory(data) {
       const container = document.getElementById('fullHistoryContainer');
       if (data.length === 0) {
-        container.innerHTML = "<p class='text-center text-gray-500 font-bold mt-4'>No links found in database.</p>";
+        container.innerHTML = "<div class='text-center py-10'><p class='text-gray-400 font-bold uppercase tracking-widest text-sm'>No links in database.</p></div>";
         return;
       }
       container.innerHTML = data.map(item => `
-        <div class="bg-gray-50 p-4 rounded-xl border-2 border-gray-200 flex flex-col md:flex-row justify-between items-center filter-item gap-4">
+        <div class="bg-gray-50 p-5 rounded-2xl border-2 border-gray-200 flex flex-col md:flex-row justify-between items-center filter-item gap-4 shadow-sm hover:border-yellow-400 transition-colors">
           <div class="overflow-hidden w-full">
-            <p class="font-bold text-gray-900 text-sm truncate search-target">${item.title}</p>
-            <p class="text-[10px] text-gray-400 truncate search-target mb-1">${item.source}</p>
+            <p class="font-black text-gray-900 text-sm truncate search-target mb-1">${item.title}</p>
+            <p class="text-[10px] text-gray-500 truncate search-target mb-3 font-medium">${item.source}</p>
             <div class="flex items-center gap-3">
               <a href="${item.shortLink}" target="_blank" class="text-xs font-black text-blue-600 truncate hover:underline search-target">${item.shortLink}</a>
-              <span class="text-[10px] font-bold text-gray-600 bg-gray-200 px-2 py-0.5 rounded-full">Clicks: ${item.clicks}</span>
+              <span class="text-[10px] font-black text-gray-800 bg-yellow-200 border border-yellow-400 px-3 py-1 rounded-full shadow-sm">Clicks: ${item.clicks}</span>
             </div>
           </div>
-          <div class="flex gap-2 w-full md:w-auto shrink-0">
-            <button onclick="navigator.clipboard.writeText('${item.shortLink}'); showToast();" class="flex-1 bg-black text-white px-3 py-2 rounded-lg text-xs font-bold uppercase hover:bg-yellow-400 hover:text-black transition-colors">Copy</button>
-            <button onclick="editLink('${item.shortCode}', '${item.source}')" class="flex-1 bg-blue-100 text-blue-700 px-3 py-2 rounded-lg text-xs font-bold uppercase hover:bg-blue-600 hover:text-white transition-colors">Edit</button>
-            <button onclick="deleteLink('${item.shortCode}')" class="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded-lg text-xs font-bold uppercase hover:bg-red-600 hover:text-white transition-colors">Delete</button>
+          <div class="flex flex-wrap md:flex-nowrap gap-2 w-full md:w-auto shrink-0 mt-3 md:mt-0">
+            <button onclick="navigator.clipboard.writeText('${item.shortLink}'); showToast();" class="flex-1 bg-black text-white px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-yellow-400 hover:text-black transition-colors shadow-md">Copy</button>
+            <button onclick="editLink('${item.shortCode}', '${item.source}')" class="flex-1 bg-blue-100 text-blue-800 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-blue-600 hover:text-white transition-colors">Edit</button>
+            <button onclick="deleteLink('${item.shortCode}')" class="flex-1 bg-red-100 text-red-800 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-red-600 hover:text-white transition-colors">Del</button>
           </div>
-        </div>
-      `).join('');
-    }
-
-    function renderRecentLinks(data) {
-      const container = document.getElementById('recentHistoryList');
-      if (data.length === 0) {
-        container.innerHTML = '<p class="text-xs text-gray-400 font-bold col-span-full text-center py-4">No recent links.</p>';
-        return;
-      }
-      container.innerHTML = data.map(item => `
-        <div class="bg-gray-50 p-3 rounded-xl border-2 border-gray-200 flex flex-col items-center text-center justify-between">
-          <div class="w-full">
-            <p class="font-bold text-gray-900 text-xs truncate w-full">${item.title}</p>
-            <a href="${item.shortLink}" target="_blank" class="text-[10px] font-black text-blue-600 truncate block hover:underline mt-1 w-full">${item.shortLink}</a>
-          </div>
-          <button onclick="navigator.clipboard.writeText('${item.shortLink}'); showToast();" class="mt-2 bg-black text-white px-3 py-2 rounded-lg text-[10px] font-bold uppercase hover:bg-yellow-400 hover:text-black border-2 border-transparent hover:border-black transition-colors w-full">Copy</button>
         </div>
       `).join('');
     }
