@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Linker | Workspace</title>
-  <link rel="icon" href="https://web.dev/static/articles/building/an-adaptive-favicon/image/example-light-theme-favic-d92b9def036e6.png">
+  <link rel="icon" href="https://files.catbox.moe/dkajo4.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
@@ -293,7 +293,6 @@
 
       try {
         const res = await apiGet({ action: 'history', email: currentUserEmail });
-        // Discard if a newer sync has already started.
         if (myToken !== syncToken) return;
 
         document.getElementById('modalLoader').classList.add('hidden');
@@ -346,7 +345,6 @@
       const newUrl = prompt(`Enter new Target URL for /${code}:`, oldUrl);
       if (!newUrl || newUrl === oldUrl) return;
 
-      // Optimistic update.
       const item    = cachedHistory.find(h => h.shortCode === code);
       const prevUrl = item ? item.source : oldUrl;
       if (item) item.source = newUrl;
