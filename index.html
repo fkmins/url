@@ -24,7 +24,7 @@
     .btn-loader { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 18px; height: 18px; animation: spin 0.8s linear infinite; display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    #toast { visibility: hidden; min-width: 220px; background-color: #facc15; color: #000; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 50; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-weight: 900; text-transform: uppercase;}
+    #toast { visibility: hidden; min-width: 220px; background-color: #facc15; color: #000; text-align: center; border-radius: 8px; padding: 12px; position: fixed; z-index: 50; left: 50%; bottom: 30px; transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, bottom 0.3s; font-weight: 900; text-transform: uppercase; }
     #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
     .pulse-dot { width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); animation: pulse 1.6s infinite; }
@@ -34,8 +34,6 @@
     .hidden-scrollbar::-webkit-scrollbar-track { background: transparent; }
     .hidden-scrollbar::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 20px; }
 
-    /* Pending-state dimming used during optimistic delete/edit instead of a full-page spinner */
-    .item-pending { opacity: 0.45; pointer-events: none; transition: opacity 0.15s ease; }
     .item-enter { animation: item-in 0.25s ease; }
     @keyframes item-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
   </style>
@@ -52,7 +50,6 @@
       <img src="https://img.magnific.com/free-vector/hand-drawn-kitsune-mask-illustration_23-2149367767.jpg" alt="Linker Logo" class="w-20 h-20 rounded-full border-4 border-black mb-4 object-cover shadow-lg bg-white">
       <h1 class="text-3xl font-extrabold tracking-tight text-yellow-400 border-4 border-black px-5 py-2 rounded-xl bg-black uppercase shadow-lg">Linker</h1>
     </div>
-
     <div id="g_id_onload"
          data-client_id="1024803666625-2dsd2ebgn5h4s6pg085bmssbk4kmqdbs.apps.googleusercontent.com"
          data-context="signin"
@@ -63,7 +60,7 @@
     <div class="g_id_signin flex justify-center w-full" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left"></div>
   </div>
 
-  <!-- ACCESS DENIED MODAL (Strict Dead End) -->
+  <!-- ACCESS DENIED MODAL -->
   <div id="unauthorizedModal" class="fixed inset-0 z-50 bg-black/95 hidden flex flex-col items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-white max-w-md w-full rounded-3xl border-4 border-red-500 p-8 text-center relative shadow-[0_0_50px_rgba(239,68,68,0.5)] flex flex-col items-center">
       <div class="flex justify-center text-red-500 mb-4">
@@ -92,7 +89,6 @@
             <div class="w-full">
               <input type="url" id="originalUrl" required class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 text-black font-bold focus:border-black focus:bg-white outline-none text-xs transition-all" placeholder="Paste your long URL here...">
             </div>
-
             <div class="grid grid-cols-2 gap-3 w-full">
               <div class="flex flex-col items-center">
                 <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1 text-center">Custom Name</label>
@@ -103,7 +99,6 @@
                 <input type="text" id="linkTitle" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 text-black font-medium focus:border-black focus:bg-white outline-none text-xs" placeholder="Auto Fetch">
               </div>
             </div>
-
             <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-yellow-400 hover:text-black border-2 border-black text-white font-black py-3.5 rounded-xl transition-all flex justify-center items-center gap-2 uppercase tracking-widest shadow-md text-xs">
               <span id="btnText">Generate Link</span>
               <div id="btnLoader" class="btn-loader"></div>
@@ -136,16 +131,14 @@
             </div>
           </div>
 
-          <input type="text" id="searchInput" onkeyup="filterHistory()" placeholder="Search titles, shortcodes, or target URLs..." class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-2.5 mb-4 outline-none focus:border-black font-medium text-xs transition-all shadow-inner">
+          <input type="text" id="searchInput" oninput="filterHistory()" placeholder="Search titles, shortcodes, or target URLs..." class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-2.5 mb-4 outline-none focus:border-black font-medium text-xs transition-all shadow-inner">
 
           <div id="modalLoader" class="flex-col items-center justify-center flex-1 flex my-8 w-full text-center">
-             <div class="btn-loader border-black border-t-yellow-400 w-8 h-8 border-4 mb-3" style="display:block"></div>
-             <p class="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Syncing Database...</p>
+            <div class="btn-loader border-black border-t-yellow-400 w-8 h-8 border-4 mb-3" style="display:block"></div>
+            <p class="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Syncing Database...</p>
           </div>
 
-          <div id="fullHistoryContainer" class="flex-1 overflow-y-auto space-y-4 pr-1 hidden-scrollbar w-full" style="max-height: 480px;">
-            <!-- Injected via JS -->
-          </div>
+          <div id="fullHistoryContainer" class="flex-1 overflow-y-auto space-y-4 pr-1 hidden-scrollbar w-full" style="max-height: 480px;"></div>
         </div>
       </div>
 
@@ -156,57 +149,62 @@
 
   <script>
     const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
-    let currentUserEmail = "";
-    let syncInterval = null;
-    let isMutating = false;      // guards the poll loop while a mutation is in flight
-    let syncToken = 0;           // increments per sync call; stale/out-of-order responses are dropped
-    let cachedHistory = [];      // in-memory copy of the last known-good list, for optimistic edits
+    let currentUserEmail = '';
+    let syncInterval     = null;
+    let isMutating       = false;
+    let syncToken        = 0;
+    let cachedHistory    = [];
 
-    // Every request gets cache:'no-store' PLUS a cache-busting query
-    // param. This is the fix for "Live Sync isn't live" / "delete
-    // doesn't seem to delete": browsers (and some networks) can
-    // silently cache a GET to an identical URL, so polling the same
-    // "?action=history&email=..." URL could return a stale, pre-delete
-    // snapshot even though the server-side data had already changed.
-    function noCacheUrl(url) {
-      const sep = url.includes('?') ? '&' : '?';
-      return `${url}${sep}_ts=${Date.now()}`;
+    // ── XSS guard ──────────────────────────────────────────────────────────
+    // FIX: renderCloudHistory previously injected item fields raw into
+    // innerHTML. A link title returned from UrlFetchApp (or a user-supplied
+    // URL) could contain HTML/script tags. escHtml() sanitizes every
+    // user-derived value before it touches the DOM.
+    function escHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
+
+    // ── API helpers ─────────────────────────────────────────────────────────
+    // Every GET gets cache:'no-store' + a timestamp buster so browsers and
+    // intermediary proxies can never serve a stale cached response —
+    // this was the root cause of "Live Sync isn't live" and "delete loops".
     function apiGet(params) {
-      const qs = new URLSearchParams(params).toString();
-      return fetch(noCacheUrl(`${SCRIPT_URL}?${qs}`), { cache: 'no-store' }).then(r => r.json());
+      const qs = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
+      return fetch(`${SCRIPT_URL}?${qs}`, { cache: 'no-store' }).then(r => r.json());
     }
-    // Mutations go over POST now (create/delete/update) — this keeps
-    // them off any GET cache path entirely and avoids URL length
-    // limits on long pasted URLs.
+    // Mutations go as POST to completely sidestep GET caching.
     function apiPost(params) {
       return fetch(SCRIPT_URL, {
-        method: 'POST',
-        cache: 'no-store',
+        method:  'POST',
+        cache:   'no-store',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        body: new URLSearchParams(params).toString()
+        body:    new URLSearchParams(params).toString()
       }).then(r => r.json());
     }
 
-    window.onload = () => {
-      apiGet({ action: 'ping' }).catch(() => '');
-      const sessionStr = localStorage.getItem('nexusSession');
-      if (sessionStr) {
-        const session = JSON.parse(sessionStr);
-        if (Date.now() - session.timestamp < 15 * 60 * 1000) {
+    // ── Boot ────────────────────────────────────────────────────────────────
+    window.addEventListener('load', () => {
+      apiGet({ action: 'ping' }).catch(() => {});
+      try {
+        const session = JSON.parse(localStorage.getItem('nexusSession') || 'null');
+        if (session && Date.now() - session.timestamp < 15 * 60 * 1000) {
           currentUserEmail = session.email;
           showAppScreen();
           syncCloudData();
-        } else {
-          showAuthScreen();
+          return;
         }
-      } else {
-        showAuthScreen();
-      }
-    };
+      } catch (e) {}
+      showAuthScreen();
+    });
 
+    // ── Screen management ───────────────────────────────────────────────────
     function showAuthScreen() {
-      if (syncInterval) clearInterval(syncInterval);
+      clearInterval(syncInterval);
       document.getElementById('appScreen').classList.add('hidden');
       document.getElementById('unauthorizedModal').classList.add('hidden');
       document.getElementById('authScreen').classList.remove('hidden');
@@ -216,17 +214,17 @@
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('unauthorizedModal').classList.add('hidden');
       document.getElementById('appScreen').classList.remove('hidden');
-
-      if (syncInterval) clearInterval(syncInterval);
-      syncInterval = setInterval(() => { if (currentUserEmail && !isMutating) syncCloudData(true); }, 10000);
+      clearInterval(syncInterval);
+      syncInterval = setInterval(() => {
+        if (currentUserEmail && !isMutating) syncCloudData(true);
+      }, 10000);
     }
 
     function triggerUnauthorized() {
       localStorage.removeItem('nexusSession');
-      currentUserEmail = "";
-      if (syncInterval) clearInterval(syncInterval);
-
-      document.getElementById('fullHistoryContainer').innerHTML = "";
+      currentUserEmail = '';
+      clearInterval(syncInterval);
+      document.getElementById('fullHistoryContainer').innerHTML = '';
       document.getElementById('appScreen').classList.add('hidden');
       document.getElementById('authScreen').classList.add('hidden');
       document.getElementById('unauthorizedModal').classList.remove('hidden');
@@ -234,66 +232,81 @@
 
     function logout() {
       localStorage.removeItem('nexusSession');
-      currentUserEmail = "";
-      if (syncInterval) clearInterval(syncInterval);
-      document.getElementById('fullHistoryContainer').innerHTML = "";
+      currentUserEmail = '';
+      clearInterval(syncInterval);
+      cachedHistory = [];
+      document.getElementById('fullHistoryContainer').innerHTML = '';
       showAuthScreen();
     }
 
+    // ── Auth ────────────────────────────────────────────────────────────────
     function handleCredentialResponse(response) {
-      let base64 = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      let payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-
+      const b64     = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(decodeURIComponent(
+        atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+      ));
       currentUserEmail = payload.email;
       localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
       showAppScreen();
       syncCloudData();
     }
 
+    // ── Create ──────────────────────────────────────────────────────────────
     async function handleSubmit() {
-      const url = document.getElementById('originalUrl').value.trim();
+      const url   = document.getElementById('originalUrl').value.trim();
       const title = document.getElementById('linkTitle').value.trim();
       const alias = document.getElementById('customAlias').value.trim();
-      const btn = document.getElementById('submitBtn');
-      const errorBox = document.getElementById('errorBox');
+      const btn   = document.getElementById('submitBtn');
+      const errBox = document.getElementById('errorBox');
 
-      errorBox.classList.add('hidden');
-      btn.disabled = true; document.getElementById('btnText').innerText = 'Processing...'; document.getElementById('btnLoader').style.display = 'block';
+      errBox.classList.add('hidden');
+      btn.disabled = true;
+      document.getElementById('btnText').innerText  = 'Processing...';
+      document.getElementById('btnLoader').style.display = 'block';
       isMutating = true;
 
       try {
-        const res = await apiPost({ action: 'create', url, title, alias, email: currentUserEmail, domain: "https://fkmins.github.io/url/" });
+        const res = await apiPost({
+          action: 'create', url, title, alias,
+          email: currentUserEmail, domain: 'https://fkmins.github.io/url/'
+        });
 
         if (!res.success) {
-           if (res.message && res.message.includes("Unauthorized")) { triggerUnauthorized(); return; }
-           errorBox.innerText = res.message; errorBox.classList.remove('hidden');
+          if (res.message && res.message.includes('Unauthorized')) { triggerUnauthorized(); return; }
+          errBox.innerText = res.message;
+          errBox.classList.remove('hidden');
         } else {
-           localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
-           document.getElementById('shortLink').value = res.shortLink;
-           document.getElementById('resultTitle').innerText = res.title;
-           document.getElementById('resultCard').classList.remove('hidden');
-           document.getElementById('shortenerForm').classList.add('hidden');
+          localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
+          document.getElementById('shortLink').value = res.shortLink;
+          document.getElementById('resultTitle').innerText = res.title;
+          document.getElementById('resultCard').classList.remove('hidden');
+          document.getElementById('shortenerForm').classList.add('hidden');
 
-           // Optimistic: drop the new link straight into the visible
-           // list instead of waiting on a full resync round-trip.
-           if (!res.isDuplicate) {
-             cachedHistory.unshift({
-               title: res.title, source: url, shortCode: res.shortLink.split('/').pop(),
-               shortLink: res.shortLink, clicks: 0
-             });
-             renderCloudHistory(cachedHistory, true);
-           }
-           isMutating = false;
-           syncCloudData(true); // background reconcile, non-blocking
+          // Optimistic insert — new link appears instantly.
+          if (!res.isDuplicate) {
+            cachedHistory.unshift({
+              title: res.title, source: url,
+              shortCode: res.shortLink.split('/').pop(),
+              shortLink: res.shortLink, clicks: 0
+            });
+            renderCloudHistory(cachedHistory, true);
+          }
+          // Background reconcile (isMutating will be reset by finally, then sync runs).
         }
       } catch (err) {
-        errorBox.innerText = 'Network Error. Check console.'; errorBox.classList.remove('hidden');
+        errBox.innerText = 'Network Error. Check console.';
+        errBox.classList.remove('hidden');
       } finally {
         isMutating = false;
-        btn.disabled = false; document.getElementById('btnText').innerText = 'Generate Link'; document.getElementById('btnLoader').style.display = 'none';
+        btn.disabled = false;
+        document.getElementById('btnText').innerText  = 'Generate Link';
+        document.getElementById('btnLoader').style.display = 'none';
+        // Run the background sync after isMutating is false.
+        syncCloudData(true);
       }
     }
 
+    // ── Sync ────────────────────────────────────────────────────────────────
     async function syncCloudData(isSilent = false) {
       if (!currentUserEmail || isMutating) return;
       const myToken = ++syncToken;
@@ -305,10 +318,8 @@
 
       try {
         const res = await apiGet({ action: 'history', email: currentUserEmail });
-
-        // Drop this response if a newer sync has started since, or if
-        // a mutation started while this request was in flight.
-        if (myToken !== syncToken || isMutating) return;
+        // Discard if a newer sync has already started.
+        if (myToken !== syncToken) return;
 
         document.getElementById('modalLoader').classList.add('hidden');
         document.getElementById('modalLoader').classList.remove('flex');
@@ -317,47 +328,53 @@
           localStorage.setItem('nexusSession', JSON.stringify({ email: currentUserEmail, timestamp: Date.now() }));
           cachedHistory = res.history;
           renderCloudHistory(cachedHistory);
-          document.getElementById('lastSyncedLabel').innerText = `· ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-        } else if (res.message && res.message.includes("Unauthorized")) {
+          document.getElementById('lastSyncedLabel').innerText =
+            '· ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else if (res.message && res.message.includes('Unauthorized')) {
           triggerUnauthorized();
         }
       } catch (e) {
-        if (myToken === syncToken) document.getElementById('modalLoader').classList.add('hidden');
+        if (myToken === syncToken) {
+          document.getElementById('modalLoader').classList.add('hidden');
+          document.getElementById('modalLoader').classList.remove('flex');
+        }
       }
     }
 
+    // ── Delete ──────────────────────────────────────────────────────────────
     async function deleteLink(code) {
       if (!confirm(`Are you sure you want to permanently delete /${code}?`)) return;
 
-      // Optimistic removal — the item disappears instantly instead of
-      // waiting through a full-list "Syncing..." teardown.
-      const removedIndex = cachedHistory.findIndex(h => h.shortCode === code);
-      const removed = removedIndex > -1 ? cachedHistory.splice(removedIndex, 1)[0] : null;
+      // Optimistic removal — instant UI update, no full-page spinner.
+      const idx     = cachedHistory.findIndex(h => h.shortCode === code);
+      const removed = idx > -1 ? cachedHistory.splice(idx, 1)[0] : null;
       renderCloudHistory(cachedHistory);
 
       isMutating = true;
       try {
         const res = await apiPost({ action: 'delete', code, email: currentUserEmail });
         if (!res.success) {
-          if (res.message && res.message.includes("Unauthorized")) { triggerUnauthorized(); return; }
-          alert("Error: " + res.message);
-          if (removed) { cachedHistory.splice(removedIndex, 0, removed); renderCloudHistory(cachedHistory); }
+          if (res.message && res.message.includes('Unauthorized')) { triggerUnauthorized(); return; }
+          alert('Error: ' + res.message);
+          // Rollback optimistic removal.
+          if (removed) { cachedHistory.splice(idx, 0, removed); renderCloudHistory(cachedHistory); }
         }
       } catch (e) {
-        alert("Network error. Could not delete link.");
-        if (removed) { cachedHistory.splice(removedIndex, 0, removed); renderCloudHistory(cachedHistory); }
+        alert('Network error. Could not delete link.');
+        if (removed) { cachedHistory.splice(idx, 0, removed); renderCloudHistory(cachedHistory); }
       } finally {
         isMutating = false;
-        syncCloudData(true); // reconcile with server in the background
+        syncCloudData(true);
       }
     }
 
+    // ── Edit ────────────────────────────────────────────────────────────────
     async function editLink(code, oldUrl) {
       const newUrl = prompt(`Enter new Target URL for /${code}:`, oldUrl);
       if (!newUrl || newUrl === oldUrl) return;
 
-      // Optimistic update — reflect the new URL immediately.
-      const item = cachedHistory.find(h => h.shortCode === code);
+      // Optimistic update.
+      const item    = cachedHistory.find(h => h.shortCode === code);
       const prevUrl = item ? item.source : oldUrl;
       if (item) item.source = newUrl;
       renderCloudHistory(cachedHistory);
@@ -366,12 +383,12 @@
       try {
         const res = await apiPost({ action: 'update', code, url: newUrl, email: currentUserEmail });
         if (!res.success) {
-          if (res.message && res.message.includes("Unauthorized")) { triggerUnauthorized(); return; }
-          alert("Error: " + res.message);
+          if (res.message && res.message.includes('Unauthorized')) { triggerUnauthorized(); return; }
+          alert('Error: ' + res.message);
           if (item) { item.source = prevUrl; renderCloudHistory(cachedHistory); }
         }
       } catch (e) {
-        alert("Network error. Could not edit link.");
+        alert('Network error. Could not edit link.');
         if (item) { item.source = prevUrl; renderCloudHistory(cachedHistory); }
       } finally {
         isMutating = false;
@@ -379,56 +396,67 @@
       }
     }
 
+    // ── Render ──────────────────────────────────────────────────────────────
     function renderCloudHistory(data, animateFirst) {
       const container = document.getElementById('fullHistoryContainer');
-      if (data.length === 0) {
+      if (!data || data.length === 0) {
         container.innerHTML = "<div class='text-center py-12 w-full'><p class='text-gray-400 font-bold uppercase tracking-widest text-xs'>No links found.</p></div>";
         return;
       }
+      // FIX: every user-supplied field is passed through escHtml() before
+      // landing in innerHTML, preventing XSS from malicious page titles or URLs.
+      // FIX: onclick attributes now use JSON.stringify for code/url arguments,
+      // so single-quotes and special chars in URLs can't break the handler.
       container.innerHTML = data.map((item, idx) => `
         <div class="bg-gray-50 p-5 rounded-3xl border-2 border-gray-200 flex flex-col items-center justify-center filter-item ${animateFirst && idx === 0 ? 'item-enter' : ''} gap-3 shadow-sm hover:border-black transition-all text-center">
           <div class="w-full flex flex-col items-center">
-            <p class="font-black text-gray-900 text-sm truncate search-target mb-1 w-full max-w-[280px]">${item.title}</p>
-            <p class="text-[10px] text-gray-400 truncate search-target mb-3 font-medium w-full max-w-[280px]">${item.source}</p>
+            <p class="font-black text-gray-900 text-sm truncate search-target mb-1 w-full max-w-[280px]">${escHtml(item.title)}</p>
+            <p class="text-[10px] text-gray-400 truncate search-target mb-3 font-medium w-full max-w-[280px]">${escHtml(item.source)}</p>
             <div class="flex flex-col items-center gap-2 mb-2 w-full">
-              <a href="${item.shortLink}" target="_blank" class="text-xs font-black text-blue-600 truncate hover:underline search-target block w-full max-w-[280px]">${item.shortLink}</a>
-              <span class="text-[10px] font-black text-gray-800 bg-yellow-300 border border-black px-3 py-1 rounded-lg">Clicks: ${item.clicks}</span>
+              <a href="${escHtml(item.shortLink)}" target="_blank" rel="noopener noreferrer" class="text-xs font-black text-blue-600 truncate hover:underline search-target block w-full max-w-[280px]">${escHtml(item.shortLink)}</a>
+              <span class="text-[10px] font-black text-gray-800 bg-yellow-300 border border-black px-3 py-1 rounded-lg">Clicks: ${parseInt(item.clicks, 10) || 0}</span>
             </div>
           </div>
           <div class="flex gap-2 justify-center w-full mt-1">
-            <button onclick="navigator.clipboard.writeText('${item.shortLink}'); showToast();" class="bg-black text-white px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-yellow-400 hover:text-black transition-colors shadow-sm">Copy</button>
-            <button onclick="editLink('${item.shortCode}', '${item.source}')" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-blue-600 hover:text-white transition-colors">Edit</button>
-            <button onclick="deleteLink('${item.shortCode}')" class="bg-red-100 text-red-800 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-red-600 hover:text-white transition-colors">Del</button>
+            <button onclick="navigator.clipboard.writeText(${JSON.stringify(item.shortLink)}); showToast();" class="bg-black text-white px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-yellow-400 hover:text-black transition-colors shadow-sm">Copy</button>
+            <button onclick="editLink(${JSON.stringify(item.shortCode)}, ${JSON.stringify(item.source)})" class="bg-blue-100 text-blue-800 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-blue-600 hover:text-white transition-colors">Edit</button>
+            <button onclick="deleteLink(${JSON.stringify(item.shortCode)})" class="bg-red-100 text-red-800 px-4 py-2 rounded-xl text-xs font-black uppercase hover:bg-red-600 hover:text-white transition-colors">Del</button>
           </div>
         </div>
       `).join('');
       filterHistory();
     }
 
+    // ── Search ──────────────────────────────────────────────────────────────
     function filterHistory() {
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      document.querySelectorAll('.filter-item').forEach(item => {
-        item.style.display = item.innerText.toLowerCase().includes(query) ? "flex" : "none";
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      document.querySelectorAll('.filter-item').forEach(el => {
+        el.style.display = el.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
       });
     }
 
+    // ── Utilities ───────────────────────────────────────────────────────────
     function resetForm() {
       document.getElementById('shortenerForm').reset();
       document.getElementById('shortenerForm').classList.remove('hidden');
       document.getElementById('resultCard').classList.add('hidden');
+      // FIX: error box was not cleared on reset — a previous error
+      // stayed visible when the user clicked "Create Another".
+      document.getElementById('errorBox').classList.add('hidden');
+      document.getElementById('errorBox').innerText = '';
     }
 
     function copyLink() {
-      const copyText = document.getElementById('shortLink');
-      copyText.select();
-      navigator.clipboard.writeText(copyText.value);
+      const el = document.getElementById('shortLink');
+      el.select();
+      navigator.clipboard.writeText(el.value);
       showToast();
     }
 
     function showToast() {
-      const toast = document.getElementById("toast");
-      toast.className = "show";
-      setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+      const t = document.getElementById('toast');
+      t.className = 'show';
+      setTimeout(() => { t.className = t.className.replace('show', ''); }, 3000);
     }
   </script>
 </body>
