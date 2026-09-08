@@ -3,98 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Linker - Your Shorter</title>
-  <meta property="og:title" content="Linker">
-  <meta property="og:description" content="Linker">
-  <meta property="og:image" content="https://files.catbox.moe/dkajo4.png">
-  <meta name="twitter:card" content="summary_large_image">
+  <title>Linker — Redirecting…</title>
   <link rel="icon" href="https://files.catbox.moe/dkajo4.png">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta property="og:title" content="Linker">
+  <meta property="og:description" content="Linker — Private URL Shortener">
+  <meta property="og:image" content="https://files.catbox.moe/dkajo4.png">
+  <meta name="twitter:card" content="summary">
+
+  <!-- Tailwind CSS v3 (standalone build) -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+
   <style>
-    body { 
-      font-family: system-ui, -apple-system, sans-serif; 
-      margin: 0; 
-      padding: 1rem; 
-      min-height: 100vh; 
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center; 
-      position: relative;
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      margin: 0; padding: 1rem;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
     }
-    .bg-image { 
-      position: fixed; 
-      inset: 0; 
-      z-index: -2; 
-      background-image: url('https://knnindia.co.in/uploads/newsfiles/FLIPKART-12-8-2025.jpg'); 
-      background-size: cover; 
-      background-position: center; 
+
+    .bg-img {
+      position: fixed; inset: 0; z-index: -2;
+      background: url('https://wallpaperaccess.com/full/8532104.jpg') center/cover no-repeat;
     }
-    .bg-overlay { 
-      position: fixed; 
-      inset: 0; 
-      z-index: -1; 
-      background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay to ensure white boxes are visible */
+    .bg-overlay {
+      position: fixed; inset: 0; z-index: -1;
+      background: rgba(0,0,0,.75);
     }
-    .loader { 
-      border: 4px solid rgba(0,0,0,.1); 
-      border-top-color: #facc15; 
-      border-radius: 50%; 
-      width: 45px; 
-      height: 45px; 
-      animation: spin 1s linear infinite; 
-      margin: 0 auto 16px; 
+
+    .loader {
+      border: 4px solid rgba(0,0,0,.08); border-top-color: #facc15;
+      border-radius: 50%; width: 42px; height: 42px;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Fade-in for error card */
+    .fade-in { animation: fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(.95); } }
   </style>
 </head>
 <body>
-  
-  <div class="bg-image"></div>
+
+  <div class="bg-img"></div>
   <div class="bg-overlay"></div>
 
-  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[280px] flex flex-col items-center">
+  <!-- Loading state -->
+  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl
+                             border-4 border-yellow-400 shadow-2xl min-w-[280px]
+                             flex flex-col items-center">
     <div class="loader"></div>
-    <p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">Please wait ..... </p>
+    <p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">
+      Resolving link…
+    </p>
   </div>
-  
-  <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-xs w-full border-4 border-gray-200 shadow-2xl flex flex-col items-center">
-    <div class="mb-3 text-red-500 flex justify-center">
-      <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-    </div>
-    <h2 class="text-xl font-black text-red-600 mb-2 uppercase tracking-widest border-b-2 border-red-100 pb-2 w-full">Link Inactive</h2>
-    <p class="text-gray-600 mt-3 font-bold text-xs leading-relaxed">This link is invalid or has been deleted.</p>
+
+  <!-- Error state (hidden until needed) -->
+  <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl
+                           max-w-xs w-full border-4 border-gray-200 shadow-2xl
+                           flex-col items-center fade-in">
+    <svg class="w-14 h-14 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667
+               1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464
+               0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+    </svg>
+    <h2 class="text-xl font-black text-red-600 mb-2 uppercase tracking-widest
+               border-b-2 border-red-100 pb-2 w-full">Link Inactive</h2>
+    <p class="text-gray-600 mt-3 font-bold text-xs leading-relaxed">
+      This link is invalid or has been deleted.
+    </p>
+    <a href="./"
+       class="mt-5 inline-block bg-black text-white font-bold text-xs uppercase
+              tracking-widest px-6 py-2.5 rounded-xl hover:bg-yellow-400
+              hover:text-black transition-colors">
+      Go Home
+    </a>
   </div>
-  
+
   <script>
-    const API = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
-    async function routeUser() {
-      let code = new URLSearchParams(window.location.search).get('code');
-      if (!code) {
-        const segs = window.location.pathname.replace(/\/$/,'').split('/').filter(Boolean);
-        code = segs[segs.length - 1] || '';
+  'use strict';
+
+  const API = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
+
+  (async function redirect() {
+    /* ── Extract the short code from the URL ───────────────────────────
+     *  Supports:
+     *    /url/mycode        (path-based on GitHub Pages)
+     *    /url/?code=mycode  (query param)
+     *    /url/?mycode       (bare query — legacy compat)
+     * ──────────────────────────────────────────────────────────────── */
+    let code = new URLSearchParams(window.location.search).get('code');
+
+    if (!code) {
+      const segs = window.location.pathname
+        .replace(/\/+$/, '')
+        .split('/')
+        .filter(Boolean);
+      // Last segment that isn't the repo name or an html file
+      code = segs.length > 0 ? segs[segs.length - 1] : '';
+    }
+
+    // Bare query string fallback:  ?mycode
+    if (!code && window.location.search.length > 1 && !window.location.search.includes('=')) {
+      code = window.location.search.substring(1);
+    }
+
+    // If no code, or it's the repo root / an HTML file → show error
+    if (!code || code.toLowerCase() === 'url' || /\.html?$/i.test(code)) {
+      return showError();
+    }
+
+    try {
+      const res = await fetch(
+        API + '?code=' + encodeURIComponent(code) + '&_ts=' + Date.now(),
+        { cache: 'no-store' }
+      ).then(r => r.json());
+
+      if (res.success && res.url) {
+        document.getElementById('statusText').textContent = 'Redirecting…';
+        document.getElementById('statusText').classList.replace('text-gray-900', 'text-yellow-600');
+        window.location.replace(res.url);
+      } else {
+        showError();
       }
-      if (!code && window.location.search.length > 1 && !window.location.search.includes('='))
-        code = window.location.search.substring(1);
-      if (!code || code.toLowerCase() === 'url' || code.includes('.html')) return showError();
-      
-      try {
-        const res = await fetch(`${API}?code=${encodeURIComponent(code)}&_ts=${Date.now()}`, { cache: 'no-store' }).then(r => r.json());
-        if (res.success && res.url) {
-          document.getElementById('statusText').textContent = 'Target acquired. Redirecting...';
-          document.getElementById('statusText').classList.replace('text-gray-900','text-yellow-500');
-          window.location.replace(res.url);
-        } else { showError(); }
-      } catch(e) { showError(); }
+    } catch (_) {
+      showError();
     }
-    
-    function showError() {
-      document.getElementById('loadingUI').classList.add('hidden');
-      document.getElementById('errorUI').classList.remove('hidden');
-      document.getElementById('errorUI').classList.add('flex');
-    }
-    
-    routeUser();
+  })();
+
+  function showError() {
+    document.getElementById('loadingUI').classList.add('hidden');
+    const err = document.getElementById('errorUI');
+    err.classList.remove('hidden');
+    err.classList.add('flex');
+  }
   </script>
 </body>
 </html>
