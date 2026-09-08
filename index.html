@@ -3,16 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Linker | Workspace</title>
+  <title>Linker</title>
   <link rel="icon" href="https://files.catbox.moe/dkajo4.png">
   <meta name="description" content="Linker — Private URL Shortener Workspace">
   <meta property="og:title" content="Linker">
   <meta property="og:image" content="https://files.catbox.moe/dkajo4.png">
 
-  <!-- Tailwind CSS v3 (standalone build — no Play CDN overhead) -->
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -24,13 +22,11 @@
       overflow-y: auto; overflow-x: hidden;
     }
 
-    /* ── Backgrounds ───────────────────────────────────────────────────── */
     .bg-wolf    { position: fixed; inset: 0; z-index: -2;
                   background: url('https://wallpaperaccess.com/full/8532104.jpg') center/cover no-repeat; }
     .bg-overlay { position: fixed; inset: 0; z-index: -1;
                   background: rgba(0,0,0,.80); }
 
-    /* ── Snow ──────────────────────────────────────────────────────────── */
     .snow {
       position: fixed; inset: 0; pointer-events: none; z-index: 0;
       background-image:
@@ -44,7 +40,6 @@
       to { background-position: 500px 1000px, 400px 400px, 300px 300px; }
     }
 
-    /* ── Spinner ───────────────────────────────────────────────────────── */
     .spinner {
       border: 3px solid rgba(255,255,255,.3); border-top-color: #fff;
       border-radius: 50%; width: 18px; height: 18px;
@@ -57,7 +52,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Toast ─────────────────────────────────────────────────────────── */
     #toast {
       visibility: hidden; min-width: 200px;
       background: #facc15; color: #000; text-align: center;
@@ -70,7 +64,6 @@
     }
     #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
-    /* ── Pulse dot ─────────────────────────────────────────────────────── */
     .pulse-dot {
       width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
       display: inline-block;
@@ -83,16 +76,13 @@
       100% { transform: scale(.95); box-shadow: 0 0 0 0   rgba(34,197,94,0);  }
     }
 
-    /* ── Scrollbar ─────────────────────────────────────────────────────── */
     .slim-scroll::-webkit-scrollbar       { width: 5px; }
     .slim-scroll::-webkit-scrollbar-track { background: transparent; }
     .slim-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
 
-    /* ── Item animation ────────────────────────────────────────────────── */
     .item-enter { animation: item-in .25s ease; }
     @keyframes item-in { from { opacity: 0; transform: translateY(-8px); } }
 
-    /* ── Edit modal ────────────────────────────────────────────────────── */
     .modal-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.6);
                       display: none; align-items: center; justify-content: center;
                       backdrop-filter: blur(4px); }
@@ -105,9 +95,6 @@
   <div class="bg-overlay"></div>
   <div class="snow"></div>
 
-  <!-- ╔═══════════════════════════════════════╗
-       ║         1. AUTH SCREEN                ║
-       ╚═══════════════════════════════════════╝ -->
   <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200">
     <div class="flex flex-col items-center mb-8">
       <img src="https://files.catbox.moe/dkajo4.png" alt="Linker"
@@ -125,12 +112,9 @@
          data-theme="outline"  data-text="signin_with"
          data-size="large"     data-logo_alignment="left"></div>
 
-    <p id="authStatus" class="mt-5 text-xs text-gray-400 font-bold hidden">Verifying access…</p>
+    <p id="authStatus" class="mt-5 text-xs text-gray-400 font-bold hidden">Verifying details, wait</p>
   </div>
 
-  <!-- ╔═══════════════════════════════════════╗
-       ║       2. ACCESS DENIED MODAL          ║
-       ╚═══════════════════════════════════════╝ -->
   <div id="unauthorizedModal"
        class="fixed inset-0 z-50 bg-black/95 hidden flex-col items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-white max-w-md w-full rounded-3xl border-4 border-red-500 p-8 text-center
@@ -146,13 +130,9 @@
     </div>
   </div>
 
-  <!-- ╔═══════════════════════════════════════╗
-       ║          3. APP SCREEN                ║
-       ╚═══════════════════════════════════════╝ -->
   <div id="appScreen" class="relative z-10 w-full max-w-6xl hidden">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
-      <!-- ── LEFT: Generator ────────────────────────────────────────────── -->
       <div class="lg:col-span-5 flex flex-col h-full">
         <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-gray-200
                     flex-1 flex flex-col items-center">
@@ -165,7 +145,6 @@
                  class="w-16 h-16 rounded-full border-4 border-black mb-3 object-cover shadow-lg bg-white">
           </div>
 
-          <!-- Shortener form -->
           <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();"
                 class="space-y-4 w-full flex flex-col items-center">
             <input type="url" id="originalUrl" required placeholder="Enter URL"
@@ -199,7 +178,6 @@
             </button>
           </form>
 
-          <!-- Result card (shown after successful creation) -->
           <div id="resultCard" class="hidden mt-4 pt-4 border-t-2 border-gray-100 w-full flex flex-col items-center">
             <p id="resultTitle" class="text-xs font-black text-gray-700 uppercase tracking-wide
                                        text-center truncate w-full mb-3"></p>
@@ -223,14 +201,12 @@
             </button>
           </div>
 
-          <!-- Error box -->
           <div id="errorBox"
                class="hidden mt-3 bg-red-100 text-red-900 p-2.5 rounded-xl text-xs
                       font-bold text-center border-2 border-red-200 w-full"></div>
         </div>
       </div>
 
-      <!-- ── RIGHT: Links List ──────────────────────────────────────────── -->
       <div class="lg:col-span-7 flex flex-col h-full">
         <div class="w-full bg-white rounded-3xl p-6 border-4 border-gray-200 shadow-2xl
                     h-full flex flex-col items-center min-h-[500px]">
@@ -249,13 +225,11 @@
                         mb-4 outline-none focus:border-black font-medium text-xs
                         transition-all shadow-inner">
 
-          <!-- Loader -->
           <div id="listLoader" class="flex-col items-center justify-center flex-1 flex my-8 w-full text-center">
             <div class="spinner-dark mb-3"></div>
             <p class="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Syncing database…</p>
           </div>
 
-          <!-- Links container -->
           <div id="linksContainer"
                class="flex-1 overflow-y-auto space-y-4 pr-1 slim-scroll w-full hidden"
                style="max-height:480px"></div>
@@ -265,9 +239,6 @@
     </div>
   </div>
 
-  <!-- ╔═══════════════════════════════════════╗
-       ║       4. EDIT MODAL                   ║
-       ╚═══════════════════════════════════════╝ -->
   <div id="editModal" class="modal-backdrop">
     <div class="bg-white rounded-3xl p-6 border-4 border-gray-200 shadow-2xl
                 w-full max-w-md mx-4 flex flex-col items-center">
@@ -311,33 +282,25 @@
     </div>
   </div>
 
-  <!-- Toast -->
-  <div id="toast">Link Copied</div>
+ <div id="toast">Link Copied</div>
 
-  <!-- ╔═══════════════════════════════════════╗
-       ║          JAVASCRIPT                   ║
-       ╚═══════════════════════════════════════╝ -->
   <script>
   'use strict';
 
-  /* ── Config ──────────────────────────────────────────────────────────── */
   const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
   const DOMAIN     = 'https://fkmins.github.io/url/';
   const SESSION_KEY = 'linkerSession';
   const HISTORY_KEY = 'linkerHistory';
   const SESSION_TTL = 15 * 60 * 1000;  // 15 min
 
-  /* ── State ───────────────────────────────────────────────────────────── */
   let currentEmail  = '';
   let syncTimer     = null;
   let isMutating    = false;
-  let syncSeq       = 0;        // prevents stale sync responses from overwriting newer data
+  let syncSeq       = 0;       
   let cachedHistory = [];
 
-  /* ── DOM helpers ─────────────────────────────────────────────────────── */
   const $  = id => document.getElementById(id);
 
-  /** Escape user strings before injecting into HTML */
   function esc(s) {
     return String(s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -345,7 +308,6 @@
       .replace(/'/g, '&#39;');
   }
 
-  /* ── API (GET only — GAS 302 redirect kills POST body) ───────────────── */
   function api(params) {
     const qs = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
     return fetch(SCRIPT_URL + '?' + qs, { cache: 'no-store' })
@@ -356,20 +318,15 @@
       .catch(() => ({ success: false, message: 'Network error — check your connection.' }));
   }
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  BOOT
-   * ══════════════════════════════════════════════════════════════════════ */
   window.addEventListener('load', () => {
-    // Warm-start the GAS container
+
     api({ action: 'ping' }).catch(() => {});
 
-    // Try to restore a valid session
     try {
       const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
       if (sess && Date.now() - sess.ts < SESSION_TTL) {
         currentEmail = sess.email;
 
-        // Show cached history instantly while background sync runs
         const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || 'null');
         if (Array.isArray(saved) && saved.length) {
           cachedHistory = saved;
@@ -385,9 +342,6 @@
     showAuth();
   });
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  SCREEN TRANSITIONS
-   * ══════════════════════════════════════════════════════════════════════ */
   function showAuth() {
     stopSync();
     $('appScreen').classList.add('hidden');
@@ -419,24 +373,17 @@
   function showLoader() { $('listLoader').classList.remove('hidden'); $('listLoader').classList.add('flex'); }
   function hideLoader() { $('listLoader').classList.add('hidden');    $('listLoader').classList.remove('flex'); }
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  AUTH
-   *  SECURITY: The app screen is ONLY shown AFTER the server confirms
-   *  the user's email is authorised. No brief flash of content.
-   * ══════════════════════════════════════════════════════════════════════ */
   async function handleCredentialResponse(response) {
-    // Decode the JWT to extract email
+
     const b64     = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     const payload = JSON.parse(decodeURIComponent(
       atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
     ));
     const email = payload.email;
 
-    // Keep auth screen visible, show "Verifying…"
     $('authStatus').classList.remove('hidden');
     $('authStatus').textContent = 'Verifying access…';
 
-    // Server-side auth check
     const res = await api({ action: 'history', email: email });
 
     if (res.success) {
@@ -449,7 +396,7 @@
       stampSync();
       showApp();
     } else {
-      // Not authorised — show denied screen, never reveal the app
+
       $('authStatus').classList.add('hidden');
       showDenied();
     }
@@ -469,9 +416,6 @@
     localStorage.setItem(SESSION_KEY, JSON.stringify({ email: currentEmail, ts: Date.now() }));
   }
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  AUTO-SYNC
-   * ══════════════════════════════════════════════════════════════════════ */
   function startSync() {
     stopSync();
     syncTimer = setInterval(() => {
@@ -490,7 +434,7 @@
     if (!silent && !cachedHistory.length) showLoader();
 
     const res = await api({ action: 'history', email: currentEmail });
-    if (mySeq !== syncSeq) return;  // stale
+    if (mySeq !== syncSeq) return;  
 
     hideLoader();
 
@@ -509,9 +453,6 @@
     $('lastSyncedLabel').textContent = '· ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  CREATE
-   * ══════════════════════════════════════════════════════════════════════ */
   async function handleSubmit() {
     const url    = $('originalUrl').value.trim();
     const title  = $('linkTitle').value.trim();
@@ -537,20 +478,18 @@
         return;
       }
 
-      // Show result
       saveSession();
       $('shortLink').value = res.shortLink;
       $('resultTitle').textContent = res.title || 'Link Created';
       $('resultCard').classList.remove('hidden');
       $('shortenerForm').classList.add('hidden');
 
-      // Show duplicate note if applicable
       if (res.isDuplicate) {
         $('resultDupNote').textContent = res.message || 'This URL was already shortened.';
         $('resultDupNote').classList.remove('hidden');
       } else {
         $('resultDupNote').classList.add('hidden');
-        // Optimistic insert so user sees it immediately
+
         cachedHistory.unshift({
           title: res.title, source: url,
           shortCode: res.shortLink.replace(DOMAIN, ''),
@@ -576,13 +515,9 @@
     $('errorBox').textContent = '';
   }
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  DELETE
-   * ══════════════════════════════════════════════════════════════════════ */
   async function deleteLink(code) {
     if (!confirm('Permanently delete /' + code + '?')) return;
 
-    // Optimistic removal
     const idx     = cachedHistory.findIndex(h => h.shortCode === code);
     const removed = idx > -1 ? cachedHistory.splice(idx, 1)[0] : null;
     renderLinks(cachedHistory);
@@ -604,9 +539,6 @@
     }
   }
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  EDIT (modal-based, supports URL + title change)
-   * ══════════════════════════════════════════════════════════════════════ */
   function openEditModal(code, currentUrl, currentTitle) {
     $('editCode').value          = code;
     $('editCodeDisplay').value   = '/' + code;
@@ -636,7 +568,6 @@
     $('editSaveLoader').style.display = 'block';
     $('editError').classList.add('hidden');
 
-    // Optimistic update
     const item    = cachedHistory.find(h => h.shortCode === code);
     const prevUrl = item ? item.source : newUrl;
     const prevTtl = item ? item.title  : '';
@@ -656,7 +587,7 @@
         if ((res.message || '').includes('Unauthorized')) { showDenied(); return; }
         $('editError').textContent = res.message || 'Update failed.';
         $('editError').classList.remove('hidden');
-        // Rollback
+
         if (item) { item.source = prevUrl; item.title = prevTtl; renderLinks(cachedHistory); }
         return;
       }
@@ -672,14 +603,10 @@
     }
   }
 
-  // Close modal on backdrop click
   $('editModal')?.addEventListener('click', e => {
     if (e.target === $('editModal')) closeEditModal();
   });
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  RENDER
-   * ══════════════════════════════════════════════════════════════════════ */
   function renderLinks(data, animateFirst) {
     const c = $('linksContainer');
     c.classList.remove('hidden');
@@ -697,7 +624,6 @@
       const link  = esc(item.shortLink);
       const clicks = parseInt(item.clicks, 10) || 0;
 
-      // Use data attributes for handlers to avoid inline JS injection issues
       return '<div class="bg-gray-50 p-5 rounded-3xl border-2 border-gray-200 flex flex-col items-center ' +
         'filter-item gap-3 shadow-sm hover:border-black transition-all text-center' +
         (animateFirst && i === 0 ? ' item-enter' : '') + '">' +
@@ -728,7 +654,6 @@
     filterHistory();
   }
 
-  // Event delegation for link action buttons (avoids inline onclick + escaping issues)
   $('linksContainer')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -751,9 +676,6 @@
     });
   }
 
-  /* ══════════════════════════════════════════════════════════════════════
-   *  UTILITIES
-   * ══════════════════════════════════════════════════════════════════════ */
   function copyLink() {
     const inp = $('shortLink');
     inp.select();
