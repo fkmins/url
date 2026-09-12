@@ -70,6 +70,7 @@
       box-shadow: 0 0 0 0 rgba(34,197,94,.7);
       animation: pulse 1.6s infinite;
     }
+    .pulse-dot.offline { background: #f59e0b; animation: none; box-shadow: none; }
     @keyframes pulse {
       0%   { transform: scale(.95); box-shadow: 0 0 0 0   rgba(34,197,94,.7); }
       70%  { transform: scale(1);   box-shadow: 0 0 0 8px rgba(34,197,94,0);  }
@@ -87,6 +88,8 @@
                       display: none; align-items: center; justify-content: center;
                       backdrop-filter: blur(4px); }
     .modal-backdrop.open { display: flex; }
+
+    [data-action]:disabled { opacity: .5; cursor: wait; }
   </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen py-8 px-4">
@@ -123,10 +126,15 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
       </svg>
-      <h2 class="text-2xl font-black text-red-600 mb-2 uppercase tracking-widest">Access Denied</h2>
-      <p class="text-gray-700 font-bold text-xs leading-relaxed">
+      <h2 class="text-2xl font-black text-red-600 mb-2 uppercase tracking-widest" id="deniedTitle">Access Denied</h2>
+      <p class="text-gray-700 font-bold text-xs leading-relaxed" id="deniedText">
         You are not authorized to use this site.<br>Please contact <strong>dhrubajyotid1.vc</strong>
       </p>
+      <button id="deniedRetryBtn" onclick="retryAfterDenied()"
+              class="hidden mt-4 bg-black text-white font-bold text-xs uppercase tracking-widest
+                     px-6 py-2.5 rounded-xl hover:bg-yellow-400 hover:text-black transition-colors">
+        Try Again
+      </button>
     </div>
   </div>
 
@@ -214,7 +222,7 @@
           <div class="flex flex-col items-center mb-4 pb-4 border-b-2 border-gray-100 w-full text-center">
             <div class="flex items-center justify-center gap-2 bg-green-50
                         border border-green-300 px-3 py-1 rounded-full">
-              <span class="pulse-dot"></span>
+              <span class="pulse-dot" id="syncDot"></span>
               <span class="text-[10px] text-green-800 uppercase font-black">Hey 😆</span>
               <span id="lastSyncedLabel" class="text-[9px] text-green-700 font-bold ml-1"></span>
             </div>
@@ -292,14 +300,19 @@
   const SESSION_KEY = 'linkerSession';
   const HISTORY_KEY = 'linkerHistory';
   const SESSION_TTL = 15 * 60 * 1000;  // 15 min
+  const SYNC_INTERVAL_MS = 12000;
+  const API_RETRY_ATTEMPTS = 2;
 
   let currentEmail  = '';
   let syncTimer     = null;
   let isMutating    = false;
   let syncSeq       = 0;       
   let cachedHistory = [];
+  let pendingCodes  = new Set(); // per-link in-flight guard for edit/delete
+  let deniedWasNetworkError = false;
 
   const $  = id => document.getElementById(id);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   function esc(s) {
     return String(s)
@@ -308,19 +321,32 @@
       .replace(/'/g, '&#39;');
   }
 
-  function api(params) {
+  // Distinguishes a real network failure (fetch threw / bad HTTP status) from a
+  // logical "success:false" response from the backend — callers need to react
+  // to these differently (retry/backoff vs. show the server's message).
+  async function rawApi(params) {
     const qs = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
-    return fetch(SCRIPT_URL + '?' + qs, { cache: 'no-store' })
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
-      .catch(() => ({ success: false, message: 'Network error — check your connection.' }));
+    const r = await fetch(SCRIPT_URL + '?' + qs, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+
+  async function api(params, attempts = API_RETRY_ATTEMPTS) {
+    let lastErr;
+    for (let i = 0; i < attempts; i++) {
+      try {
+        return await rawApi(params);
+      } catch (err) {
+        lastErr = err;
+        if (i < attempts - 1) await sleep(500 * Math.pow(2, i));
+      }
+    }
+    return { success: false, message: 'Network error — check your connection.', _networkError: true };
   }
 
   window.addEventListener('load', () => {
 
-    api({ action: 'ping' }).catch(() => {});
+    api({ action: 'ping' }, 1).catch(() => {});
 
     try {
       const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
@@ -342,6 +368,16 @@
     showAuth();
   });
 
+  document.addEventListener('visibilitychange', () => {
+    if (!currentEmail) return;
+    if (document.visibilityState === 'visible') {
+      startSync();       // resume polling
+      syncData(true);    // and catch up immediately
+    } else {
+      stopSync();         // don't poll a backgrounded tab
+    }
+  });
+
   function showAuth() {
     stopSync();
     $('appScreen').classList.add('hidden');
@@ -358,16 +394,46 @@
     startSync();
   }
 
-  function showDenied() {
-    localStorage.removeItem(SESSION_KEY);
-    currentEmail = '';
-    cachedHistory = [];
+  function showDenied(isNetworkError) {
+    deniedWasNetworkError = !!isNetworkError;
+    if (!isNetworkError) {
+      localStorage.removeItem(SESSION_KEY);
+      currentEmail = '';
+      cachedHistory = [];
+    }
     stopSync();
     $('linksContainer').innerHTML = '';
     $('appScreen').classList.add('hidden');
     $('authScreen').classList.add('hidden');
+
+    if (isNetworkError) {
+      $('deniedTitle').textContent = 'Connection Problem';
+      $('deniedText').innerHTML = "Couldn't reach the server. Check your connection and try again.";
+      $('deniedRetryBtn').classList.remove('hidden');
+    } else {
+      $('deniedTitle').textContent = 'Access Denied';
+      $('deniedText').innerHTML = 'You are not authorized to use this site.<br>Please contact <strong>dhrubajyotid1.vc</strong>';
+      $('deniedRetryBtn').classList.add('hidden');
+    }
+
     $('unauthorizedModal').classList.remove('hidden');
     $('unauthorizedModal').classList.add('flex');
+  }
+
+  function retryAfterDenied() {
+    $('unauthorizedModal').classList.add('hidden');
+    $('unauthorizedModal').classList.remove('flex');
+    // Re-run the same startup logic (session check → app, or show sign-in)
+    try {
+      const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      if (sess && Date.now() - sess.ts < SESSION_TTL) {
+        currentEmail = sess.email;
+        showApp();
+        syncData();
+        return;
+      }
+    } catch (_) {}
+    showAuth();
   }
 
   function showLoader() { $('listLoader').classList.remove('hidden'); $('listLoader').classList.add('flex'); }
@@ -396,9 +462,10 @@
       stampSync();
       showApp();
     } else {
-
       $('authStatus').classList.add('hidden');
-      showDenied();
+      // A network hiccup during sign-in shouldn't look like "you're banned" —
+      // only an explicit Unauthorized response should lock the user out.
+      showDenied(!!res._networkError);
     }
   }
 
@@ -418,9 +485,10 @@
 
   function startSync() {
     stopSync();
+    if (document.visibilityState === 'hidden') return; // will resume on visibilitychange
     syncTimer = setInterval(() => {
       if (currentEmail && !isMutating) syncData(true);
-    }, 12000);
+    }, SYNC_INTERVAL_MS);
   }
 
   function stopSync() {
@@ -439,14 +507,22 @@
     hideLoader();
 
     if (res.success) {
+      setSyncIndicator(true);
       saveSession();
       cachedHistory = res.history || [];
       localStorage.setItem(HISTORY_KEY, JSON.stringify(cachedHistory));
       renderLinks(cachedHistory);
       stampSync();
+    } else if (res._networkError) {
+      // Transient — keep showing the last known list, just flag the indicator.
+      setSyncIndicator(false);
     } else if ((res.message || '').includes('Unauthorized')) {
-      showDenied();
+      showDenied(false);
     }
+  }
+
+  function setSyncIndicator(online) {
+    $('syncDot').classList.toggle('offline', !online);
   }
 
   function stampSync() {
@@ -472,7 +548,7 @@
       });
 
       if (!res.success) {
-        if ((res.message || '').includes('Unauthorized')) { showDenied(); return; }
+        if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
         errBox.textContent = res.message || 'Something went wrong.';
         errBox.classList.remove('hidden');
         return;
@@ -513,10 +589,15 @@
     $('resultDupNote').classList.add('hidden');
     $('errorBox').classList.add('hidden');
     $('errorBox').textContent = '';
+    $('originalUrl').focus();
   }
 
   async function deleteLink(code) {
+    if (pendingCodes.has(code)) return;
     if (!confirm('Permanently delete /' + code + '?')) return;
+
+    pendingCodes.add(code);
+    renderLinks(cachedHistory); // re-render to show the disabled/pending state on this row
 
     const idx     = cachedHistory.findIndex(h => h.shortCode === code);
     const removed = idx > -1 ? cachedHistory.splice(idx, 1)[0] : null;
@@ -526,7 +607,7 @@
     try {
       const res = await api({ action: 'delete', code, email: currentEmail });
       if (!res.success) {
-        if ((res.message || '').includes('Unauthorized')) { showDenied(); return; }
+        if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
         showToast(res.message || 'Delete failed', true);
         // Rollback
         if (removed && idx > -1) { cachedHistory.splice(idx, 0, removed); renderLinks(cachedHistory); }
@@ -534,6 +615,7 @@
         showToast('Deleted!');
       }
     } finally {
+      pendingCodes.delete(code);
       isMutating = false;
       syncData(true);
     }
@@ -546,6 +628,7 @@
     $('editTitle').value         = currentTitle;
     $('editError').classList.add('hidden');
     $('editModal').classList.add('open');
+    $('editUrl').focus();
   }
 
   function closeEditModal() {
@@ -584,7 +667,7 @@
       const res = await api(params);
 
       if (!res.success) {
-        if ((res.message || '').includes('Unauthorized')) { showDenied(); return; }
+        if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
         $('editError').textContent = res.message || 'Update failed.';
         $('editError').classList.remove('hidden');
 
@@ -607,6 +690,12 @@
     if (e.target === $('editModal')) closeEditModal();
   });
 
+  document.addEventListener('keydown', e => {
+    if (!$('editModal').classList.contains('open')) return;
+    if (e.key === 'Escape') closeEditModal();
+    if (e.key === 'Enter' && (e.target === $('editUrl') || e.target === $('editTitle'))) submitEdit();
+  });
+
   function renderLinks(data, animateFirst) {
     const c = $('linksContainer');
     c.classList.remove('hidden');
@@ -623,6 +712,7 @@
       const title = esc(item.title);
       const link  = esc(item.shortLink);
       const clicks = parseInt(item.clicks, 10) || 0;
+      const busy   = pendingCodes.has(item.shortCode);
 
       return '<div class="bg-gray-50 p-5 rounded-3xl border-2 border-gray-200 flex flex-col items-center ' +
         'filter-item gap-3 shadow-sm hover:border-black transition-all text-center' +
@@ -641,12 +731,12 @@
           '<button data-action="copy" data-link="' + link + '" ' +
             'class="bg-black text-white px-4 py-2 rounded-xl text-xs font-black uppercase ' +
             'hover:bg-yellow-400 hover:text-black transition-colors shadow-sm">Copy</button>' +
-          '<button data-action="edit" data-code="' + code + '" data-url="' + src + '" data-title="' + title + '" ' +
+          '<button data-action="edit" data-code="' + code + '" data-url="' + src + '" data-title="' + title + '" ' + (busy ? 'disabled' : '') + ' ' +
             'class="bg-blue-100 text-blue-800 px-4 py-2 rounded-xl text-xs font-black uppercase ' +
             'hover:bg-blue-600 hover:text-white transition-colors">Edit</button>' +
-          '<button data-action="del" data-code="' + code + '" ' +
+          '<button data-action="del" data-code="' + code + '" ' + (busy ? 'disabled' : '') + ' ' +
             'class="bg-red-100 text-red-800 px-4 py-2 rounded-xl text-xs font-black uppercase ' +
-            'hover:bg-red-600 hover:text-white transition-colors">Del</button>' +
+            'hover:bg-red-600 hover:text-white transition-colors">' + (busy ? '…' : 'Del') + '</button>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -656,12 +746,11 @@
 
   $('linksContainer')?.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
-    if (!btn) return;
+    if (!btn || btn.disabled) return;
 
     const action = btn.dataset.action;
     if (action === 'copy') {
-      navigator.clipboard.writeText(btn.dataset.link);
-      showToast('Link Copied');
+      copyToClipboard(btn.dataset.link);
     } else if (action === 'edit') {
       openEditModal(btn.dataset.code, btn.dataset.url, btn.dataset.title);
     } else if (action === 'del') {
@@ -672,15 +761,32 @@
   function filterHistory() {
     const q = $('searchInput').value.toLowerCase();
     document.querySelectorAll('.filter-item').forEach(node => {
-      node.style.display = node.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+      const haystack = Array.from(node.querySelectorAll('.search-target'))
+        .map(n => n.textContent).join(' ').toLowerCase();
+      node.style.display = haystack.includes(q) ? 'flex' : 'none';
     });
   }
 
+  async function copyToClipboard(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback for non-secure contexts / older browsers
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      showToast('Link Copied');
+    } catch (_) {
+      showToast('Could not copy — long-press to copy manually', true);
+    }
+  }
+
   function copyLink() {
-    const inp = $('shortLink');
-    inp.select();
-    navigator.clipboard.writeText(inp.value);
-    showToast('Link Copied');
+    copyToClipboard($('shortLink').value);
   }
 
   function showToast(msg, isError) {
