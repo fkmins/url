@@ -1,130 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Linker</title>
-  <link rel="icon" href="https://files.catbox.moe/dkajo4.png">
-  <meta property="og:title" content="Linker">
-  <meta property="og:description" content="Linker — Private URL Shortener">
-  <meta property="og:image" content="https://files.catbox.moe/dkajo4.png">
-  <meta name="twitter:card" content="summary">
-
-  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      margin: 0; padding: 1rem; min-height: 100vh;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-    .bg-img {
-      position: fixed; inset: 0; z-index: -2;
-      background: url('https://rukminim2.flixcart.com/fk-p-flap/3200/1560/image/27ee229500ca283e.jpg') center/cover no-repeat;
-    }
-    .bg-overlay {
-      position: fixed; inset: 0; z-index: -1; background: rgba(0,0,0,.75);
-    }
-    .loader {
-      border: 4px solid rgba(0,0,0,.08); border-top-color: #facc15;
-      border-radius: 50%; width: 42px; height: 42px; animation: spin .8s linear infinite; margin: 0 auto 16px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .fade-in { animation: fadeIn .3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: scale(.95); } }
-  </style>
-</head>
-<body>
-
-  <div class="bg-img"></div>
-  <div class="bg-overlay"></div>
-
-  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[280px] flex flex-col items-center">
-    <div class="loader"></div>
-    <p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">Redirecting...</p>
-    <a id="manualLink" href="#" class="hidden mt-4 text-[10px] font-bold text-blue-600 underline">Taking too long? Click here</a>
-  </div>
-
-  <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-xs w-full border-4 border-gray-200 shadow-2xl flex-col items-center fade-in">
-    <svg class="w-14 h-14 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-    </svg>
-    <h2 id="errorTitle" class="text-xl font-black text-red-600 mb-2 uppercase tracking-widest border-b-2 border-red-100 pb-2 w-full">Link Inactive</h2>
-    <p id="errorMsg" class="text-gray-600 mt-3 font-bold text-xs leading-relaxed">This link is invalid or has been deleted.</p>
-    <a href="./" class="mt-4 inline-block bg-black text-white font-bold text-xs uppercase tracking-widest px-6 py-2.5 rounded-xl hover:bg-yellow-400 hover:text-black transition-colors">Go Home</a>
-  </div>
-
-  <script>
-  'use strict';
-  const API = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
-  const FETCH_TIMEOUT_MS = 15000; // Increased to 15s to fix "Connection Problem"
-
-  function fetchWithTimeout(url, ms) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), ms);
-    return fetch(url, { cache: 'no-store', signal: controller.signal }).finally(() => clearTimeout(timer));
-  }
-
-  (async function redirect() {
-    let code = new URLSearchParams(window.location.search).get('code');
-    if (!code) {
-      const segs = window.location.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
-      code = segs.length > 0 ? segs[segs.length - 1] : '';
-    }
-    if (!code && window.location.search.length > 1 && !window.location.search.includes('=')) {
-      code = window.location.search.substring(1);
-    }
-    if (!code || code.toLowerCase() === 'url' || /\.html?$/i.test(code)) {
-      return showError('Link Inactive', 'This link is invalid or has been deleted.');
-    }
-
-    const slowTimer = setTimeout(() => {
-      document.getElementById('manualLink').href = '#';
-      document.getElementById('manualLink').classList.remove('hidden');
-    }, 8000); // Pushed back to 8s so it rarely shows
-
-    try {
-      const res = await fetchWithTimeout(API + '?code=' + encodeURIComponent(code) + '&_ts=' + Date.now(), FETCH_TIMEOUT_MS).then(r => r.json());
-      clearTimeout(slowTimer);
-
-      if (res.success && res.url) {
-        const ua = navigator.userAgent.toLowerCase();
-        const isBot = /bot|crawler|spider|crawling|facebook|twitter|slack|whatsapp|telegram|discord/i.test(ua);
-        
-        if (!isBot) {
-          // FIX: Added content-type text/plain to bypass CORS blocks
-          fetch(API, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'log_click', code: code }),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-          }).catch(()=>{});
-        }
-
-        const finalUrl = new URL(res.url);
-        const incomingParams = new URLSearchParams(window.location.search);
-        incomingParams.delete('code'); 
-        incomingParams.forEach((v, k) => finalUrl.searchParams.set(k, v));
-
-        document.getElementById('statusText').textContent = 'Connecting...';
-        window.location.replace(finalUrl.toString() + window.location.hash);
-      } else {
-        showError('Link Inactive', res.message || 'This link is invalid or has been deleted.');
-      }
-    } catch (err) {
-      clearTimeout(slowTimer);
-      showError('Connection Problem', "Couldn't reach the server. Check your connection.");
-    }
-  })();
-
-  function showError(title, msg) {
-    document.getElementById('loadingUI').classList.add('hidden');
-    document.getElementById('errorTitle').textContent = title;
-    document.getElementById('errorMsg').textContent = msg;
-    const err = document.getElementById('errorUI');
-    err.classList.remove('hidden');
-    err.classList.add('flex');
-  }
-  </script>
-</body>
-</html>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><meta name="robots" content="noindex">
+<title>Linker</title><link rel="icon" href="https://files.catbox.moe/dkajo4.png">
+<link rel="preconnect" href="https://script.google.com"><link rel="preconnect" href="https://script.googleusercontent.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src https://script.google.com https://*.googleusercontent.com;">
+<style>*,*::before,*::after{box-sizing:border-box}body{font-family:system-ui,sans-serif;margin:0;padding:1rem;min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,#2a2a2a,#0a0a0a)}
+.card{background:#fff;padding:2rem;border-radius:1.5rem;border:4px solid #facc15;box-shadow:0 25px 50px rgba(0,0,0,.5);min-width:280px;max-width:320px;text-align:center}.card.err{border-color:#e5e7eb}
+.loader{border:4px solid rgba(0,0,0,.08);border-top-color:#facc15;border-radius:50%;width:42px;height:42px;animation:spin .8s linear infinite;margin:0 auto 16px}@keyframes spin{to{transform:rotate(360deg)}}
+p{margin:0;font-weight:900;text-transform:uppercase;letter-spacing:.1em;font-size:12px;color:#111}h2{margin:0 0 8px;font-size:20px;font-weight:900;color:#dc2626;text-transform:uppercase;letter-spacing:.1em;border-bottom:2px solid #fee2e2;padding-bottom:8px}
+.m{color:#4b5563;font-weight:700;font-size:12px;margin-top:12px;text-transform:none;letter-spacing:0}a{display:inline-block;margin-top:16px;background:#000;color:#fff;font-weight:700;font-size:12px;text-transform:uppercase;padding:10px 24px;border-radius:12px;text-decoration:none}a:hover{background:#facc15;color:#000}[hidden]{display:none!important}</style>
+</head><body>
+<div id="ld" class="card" hidden><div class="loader"></div><p>Redirecting...</p></div>
+<div id="er" class="card err" hidden><h2 id="et">Link Inactive</h2><p class="m" id="em">This link is invalid or has been deleted.</p><a href="./">Go Home</a></div>
+<script>
+'use strict';
+const API='https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec', TTL=3600000, isBot=/bot|crawler|spider|preview/i.test(navigator.userAgent);
+const show=id=>{document.getElementById('ld').hidden=true;document.getElementById(id).hidden=false;};
+const err=(t,m)=>{document.getElementById('et').textContent=t;document.getElementById('em').textContent=m;show('er');};
+const click=c=>{if(!isBot)fetch(API,{method:'POST',mode:'no-cors',keepalive:true,body:JSON.stringify({action:'log_click',code:c}),headers:{'Content-Type':'text/plain'}}).catch(()=>{});};
+const go=(raw,q)=>{let f;try{f=new URL(raw);}catch(_){return err('Link Inactive','Link invalid.');}
+  if(f.protocol!=='http:'&&f.protocol!=='https:')return err('Link Inactive','Link invalid.');
+  q.delete('code');q.forEach((v,k)=>f.searchParams.set(k,v));location.replace(f.toString()+location.hash);};
+(async()=>{
+  const q=new URLSearchParams(location.search); let c=q.get('code');
+  if(!c){const s=location.pathname.replace(/\/+$/,'').split('/').filter(Boolean);c=s.length?s[s.length-1]:'';}
+  if(!c&&location.search.length>1&&!location.search.includes('='))c=location.search.substring(1);
+  try{c=decodeURIComponent(c||'');}catch(_){c='';}
+  c=c.toLowerCase();
+  if(!c||c==='url'||/\.html?$/i.test(c))return err('Link Inactive','Invalid or deleted link.');
+  const key='linker_cache_'+c; let cached=null;
+  try{cached=JSON.parse(localStorage.getItem(key)||'null');}catch(_){}
+  const fresh=cached&&Date.now()-cached.t<TTL;
+  if(fresh){click(c);return go(cached.u,q);}
+  const spin=setTimeout(()=>show('ld'),300); // avoid flash on fast redirects
+  try{
+    const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),10000);
+    const r=await fetch(API+'?code='+encodeURIComponent(c),{signal:ctl.signal}).then(r=>r.json()).finally(()=>clearTimeout(tm));
+    clearTimeout(spin);
+    if(r.success&&r.url){try{localStorage.setItem(key,JSON.stringify({u:r.url,t:Date.now()}));}catch(_){}click(c);go(r.url,q);}
+    else{try{localStorage.removeItem(key);}catch(_){}err('Link Inactive',r.message||'Link invalid.');}
+  }catch(e){clearTimeout(spin);if(cached){click(c);return go(cached.u,q);}err('Connection Problem',"Couldn't reach server.");}
+})();
+</script></body></html>
