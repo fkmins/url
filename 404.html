@@ -42,8 +42,8 @@
 
   <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[280px] flex flex-col items-center">
     <div class="loader"></div>
-    <p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">Sending you there >></p>
-    <a id="manualLink" href="#" class="hidden mt-4 text-[10px] font-bold text-blue-600 underline">Tap here to continue</a>
+    <p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">Redirecting...</p>
+    <a id="manualLink" href="#" class="hidden mt-4 text-[10px] font-bold text-blue-600 underline">Taking too long? Click here</a>
   </div>
 
   <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-xs w-full border-4 border-gray-200 shadow-2xl flex-col items-center fade-in">
@@ -58,7 +58,7 @@
   <script>
   'use strict';
   const API = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
-  const FETCH_TIMEOUT_MS = 8000;
+  const FETCH_TIMEOUT_MS = 15000; // Increased to 15s to fix "Connection Problem"
 
   function fetchWithTimeout(url, ms) {
     const controller = new AbortController();
@@ -82,29 +82,31 @@
     const slowTimer = setTimeout(() => {
       document.getElementById('manualLink').href = '#';
       document.getElementById('manualLink').classList.remove('hidden');
-    }, 4000);
+    }, 8000); // Pushed back to 8s so it rarely shows
 
     try {
       const res = await fetchWithTimeout(API + '?code=' + encodeURIComponent(code) + '&_ts=' + Date.now(), FETCH_TIMEOUT_MS).then(r => r.json());
       clearTimeout(slowTimer);
 
       if (res.success && res.url) {
-        // Rule 14: Check for preview bots before firing the click tracker
         const ua = navigator.userAgent.toLowerCase();
         const isBot = /bot|crawler|spider|crawling|facebook|twitter|slack|whatsapp|telegram|discord/i.test(ua);
         
         if (!isBot) {
-          // Rule 10: Asynchronous, non-blocking click register
-          fetch(API, { method: 'POST', body: JSON.stringify({ action: 'log_click', code: code }) }).catch(()=>{});
+          // FIX: Added content-type text/plain to bypass CORS blocks
+          fetch(API, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'log_click', code: code }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+          }).catch(()=>{});
         }
 
-        // Rule 12: Forward incoming query parameters to the destination url
         const finalUrl = new URL(res.url);
         const incomingParams = new URLSearchParams(window.location.search);
-        incomingParams.delete('code'); // drop internal parameter
+        incomingParams.delete('code'); 
         incomingParams.forEach((v, k) => finalUrl.searchParams.set(k, v));
 
-        document.getElementById('statusText').textContent = 'Redirecting…';
+        document.getElementById('statusText').textContent = 'Connecting...';
         window.location.replace(finalUrl.toString() + window.location.hash);
       } else {
         showError('Link Inactive', res.message || 'This link is invalid or has been deleted.');
