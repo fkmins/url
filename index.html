@@ -10,7 +10,6 @@
   <meta property="og:image" content="https://files.catbox.moe/dkajo4.png">
 
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
-
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -90,6 +89,10 @@
     .modal-backdrop.open { display: flex; }
 
     [data-action]:disabled { opacity: .5; cursor: wait; }
+
+    .diag { font-size: 10px; color: #9ca3af; margin-top: 12px; }
+    .diag .ok  { color: #22c55e; }
+    .diag .err { color: #ef4444; }
   </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen py-8 px-4">
@@ -98,6 +101,7 @@
   <div class="bg-overlay"></div>
   <div class="snow"></div>
 
+  <!-- ======================== AUTH SCREEN ======================== -->
   <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200">
     <div class="flex flex-col items-center mb-8">
       <img src="https://files.catbox.moe/dkajo4.png" alt="Linker"
@@ -116,8 +120,13 @@
          data-size="large"     data-logo_alignment="left"></div>
 
     <p id="authStatus" class="mt-5 text-xs text-gray-400 font-bold hidden">Verifying details, wait</p>
+
+    <div class="diag" id="diagBar">
+      <span id="diagApi">API: checking…</span> · <span id="diagGis">GIS: checking…</span>
+    </div>
   </div>
 
+  <!-- ======================== DENIED MODAL ======================== -->
   <div id="unauthorizedModal"
        class="fixed inset-0 z-50 bg-black/95 hidden flex-col items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-white max-w-md w-full rounded-3xl border-4 border-red-500 p-8 text-center
@@ -138,9 +147,11 @@
     </div>
   </div>
 
+  <!-- ======================== MAIN APP ======================== -->
   <div id="appScreen" class="relative z-10 w-full max-w-6xl hidden">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
 
+      <!-- LEFT: Create short link -->
       <div class="lg:col-span-5 flex flex-col h-full">
         <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-gray-200
                     flex-1 flex flex-col items-center">
@@ -215,6 +226,7 @@
         </div>
       </div>
 
+      <!-- RIGHT: Link history -->
       <div class="lg:col-span-7 flex flex-col h-full">
         <div class="w-full bg-white rounded-3xl p-6 border-4 border-gray-200 shadow-2xl
                     h-full flex flex-col items-center min-h-[500px]">
@@ -247,6 +259,7 @@
     </div>
   </div>
 
+  <!-- ======================== EDIT MODAL ======================== -->
   <div id="editModal" class="modal-backdrop">
     <div class="bg-white rounded-3xl p-6 border-4 border-gray-200 shadow-2xl
                 w-full max-w-md mx-4 flex flex-col items-center">
@@ -290,28 +303,42 @@
     </div>
   </div>
 
- <div id="toast">Link Copied</div>
+  <div id="toast">Link Copied</div>
 
   <script>
   'use strict';
 
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWTYNf7bk9PtZKmmVxhUPmd6zrXVwNp52dioBGKC2jKeDlBByV2Fh142FzB8tI1Lo/exec';
+  /* ═══════════════════════════  CONFIG  ═══════════════════════════ */
+
+  // !! IMPORTANT !! — After creating a NEW deployment of your Apps Script,
+  // paste the new /exec URL here.  Simply saving the script is NOT enough;
+  // you must do  Deploy → New deployment → Web app → copy the URL.
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
+
+  // The base URL where short links resolve.  Must end with a slash.
+  // This must match the GitHub Pages URL where 404.html is deployed.
   const DOMAIN     = 'https://fkmins.github.io/url/';
-  const SESSION_KEY = 'linkerSession';
-  const HISTORY_KEY = 'linkerHistory';
-  const SESSION_TTL = 15 * 60 * 1000;  // 15 min
-  const SYNC_INTERVAL_MS = 12000;
-  const API_RETRY_ATTEMPTS = 2;
+
+  const SESSION_KEY    = 'linkerSession';
+  const HISTORY_KEY    = 'linkerHistory';
+  const SESSION_TTL    = 15 * 60 * 1000;   // 15 min
+  const SYNC_INTERVAL  = 12000;            // 12 s
+  const API_TIMEOUT    = 15000;            // 15 s per attempt
+  const API_RETRIES    = 2;
+
+  /* ═══════════════════════════  STATE  ════════════════════════════ */
 
   let currentEmail  = '';
   let syncTimer     = null;
   let isMutating    = false;
-  let syncSeq       = 0;       
+  let syncSeq       = 0;
   let cachedHistory = [];
-  let pendingCodes  = new Set(); // per-link in-flight guard for edit/delete
+  let pendingCodes  = new Set();
   let deniedWasNetworkError = false;
 
-  const $  = id => document.getElementById(id);
+  /* ═══════════════════════════  HELPERS  ══════════════════════════ */
+
+  const $ = id => document.getElementById(id);
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   function esc(s) {
@@ -321,36 +348,81 @@
       .replace(/'/g, '&#39;');
   }
 
-  // Distinguishes a real network failure (fetch threw / bad HTTP status) from a
-  // logical "success:false" response from the backend — callers need to react
-  // to these differently (retry/backoff vs. show the server's message).
+  function log(tag, ...args)  { console.log('[Linker ' + tag + ']', ...args); }
+  function warn(tag, ...args) { console.warn('[Linker ' + tag + ']', ...args); }
+  function logErr(tag, ...args)  { console.error('[Linker ' + tag + ']', ...args); }
+
+  /* ═══════════════════════════  API LAYER  ════════════════════════ */
+
+  // Google Apps Script web apps respond with a 302 → the fetch API follows
+  // the redirect automatically.  We add an AbortController timeout and
+  // detect HTML responses (sign of a misconfigured deployment).
   async function rawApi(params) {
-    const qs = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
-    const r = await fetch(SCRIPT_URL + '?' + qs, { cache: 'no-store' });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return r.json();
+    const qs  = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
+    const url = SCRIPT_URL + '?' + qs;
+    log('API', 'GET', url.substring(0, 120) + '…');
+
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT);
+
+    try {
+      const r = await fetch(url, {
+        cache: 'no-store',
+        redirect: 'follow',
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+
+      // If Apps Script is deployed as "Anyone with Google account" instead
+      // of "Anyone", Google returns an HTML login page instead of JSON.
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok) {
+        logErr('API', 'HTTP', r.status, r.statusText);
+        throw new Error('HTTP ' + r.status);
+      }
+      if (ct.includes('text/html')) {
+        logErr('API', 'Got HTML instead of JSON — your Apps Script deployment is',
+            'likely set to "Anyone with Google account" instead of "Anyone".',
+            'Redeploy with access = Anyone.');
+        throw new Error('API returned HTML (check deployment access)');
+      }
+
+      const body = await r.json();
+      log('API', 'Response:', body);
+      return body;
+    } catch (e) {
+      clearTimeout(timer);
+      throw e;
+    }
   }
 
-  async function api(params, attempts = API_RETRY_ATTEMPTS) {
+  async function api(params, attempts) {
+    attempts = attempts || API_RETRIES;
     let lastErr;
     for (let i = 0; i < attempts; i++) {
       try {
         return await rawApi(params);
-      } catch (err) {
-        lastErr = err;
-        if (i < attempts - 1) await sleep(500 * Math.pow(2, i));
+      } catch (e) {
+        lastErr = e;
+        warn('API', 'Attempt', i + 1, 'failed:', e.message);
+        if (i < attempts - 1) await sleep(600 * Math.pow(2, i));
       }
     }
+    logErr('API', 'All', attempts, 'attempts failed:', lastErr);
     return { success: false, message: 'Network error — check your connection.', _networkError: true };
   }
 
+  /* ═══════════════════════════  BOOT  ═════════════════════════════ */
+
   window.addEventListener('load', () => {
+    log('BOOT', 'Page loaded');
+    runDiagnostics();
 
-    api({ action: 'ping' }, 1).catch(() => {});
-
+    // Try to resume a stored session
     try {
       const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
       if (sess && Date.now() - sess.ts < SESSION_TTL) {
+        log('BOOT', 'Resuming session for', sess.email);
         currentEmail = sess.email;
 
         const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || 'null');
@@ -365,18 +437,46 @@
       }
     } catch (_) {}
 
+    log('BOOT', 'No valid session — showing sign-in');
     showAuth();
   });
 
+  // Pause sync when tab is hidden; catch up immediately when visible again.
   document.addEventListener('visibilitychange', () => {
     if (!currentEmail) return;
     if (document.visibilityState === 'visible') {
-      startSync();       // resume polling
-      syncData(true);    // and catch up immediately
+      startSync();
+      syncData(true);
     } else {
-      stopSync();         // don't poll a backgrounded tab
+      stopSync();
     }
   });
+
+  /* ═══════════════════════════  DIAGNOSTICS  ═════════════════════ */
+
+  async function runDiagnostics() {
+    // 1. Check API connectivity
+    try {
+      const res = await rawApi({ action: 'ping' });
+      $('diagApi').textContent = 'API: ' + (res.success ? '✓ OK' : '✗ Error');
+      $('diagApi').className   = res.success ? 'ok' : 'err';
+    } catch (e) {
+      $('diagApi').textContent = 'API: ✗ Unreachable';
+      $('diagApi').className   = 'err';
+      logErr('DIAG', 'API ping failed:', e.message);
+    }
+
+    // 2. Check Google Identity Services
+    setTimeout(() => {
+      const gisOk = typeof google !== 'undefined' && google.accounts && google.accounts.id;
+      $('diagGis').textContent = 'GIS: ' + (gisOk ? '✓ Loaded' : '✗ Not loaded');
+      $('diagGis').className   = gisOk ? 'ok' : 'err';
+      if (!gisOk) logErr('DIAG', 'Google Identity Services library did not load.',
+                       'Check ad-blockers, network, or CSP headers.');
+    }, 2500);
+  }
+
+  /* ═══════════════════════════  SCREEN SWITCHING  ════════════════ */
 
   function showAuth() {
     stopSync();
@@ -408,11 +508,11 @@
 
     if (isNetworkError) {
       $('deniedTitle').textContent = 'Connection Problem';
-      $('deniedText').innerHTML = "Couldn't reach the server. Check your connection and try again.";
+      $('deniedText').innerHTML    = "Couldn't reach the server. Check your connection and try again.";
       $('deniedRetryBtn').classList.remove('hidden');
     } else {
       $('deniedTitle').textContent = 'Access Denied';
-      $('deniedText').innerHTML = 'You are not authorized to use this site.<br>Please contact <strong>dhrubajyotid1.vc</strong>';
+      $('deniedText').innerHTML    = 'You are not authorized to use this site.<br>Please contact <strong>dhrubajyotid1.vc</strong>';
       $('deniedRetryBtn').classList.add('hidden');
     }
 
@@ -423,7 +523,6 @@
   function retryAfterDenied() {
     $('unauthorizedModal').classList.add('hidden');
     $('unauthorizedModal').classList.remove('flex');
-    // Re-run the same startup logic (session check → app, or show sign-in)
     try {
       const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
       if (sess && Date.now() - sess.ts < SESSION_TTL) {
@@ -439,37 +538,55 @@
   function showLoader() { $('listLoader').classList.remove('hidden'); $('listLoader').classList.add('flex'); }
   function hideLoader() { $('listLoader').classList.add('hidden');    $('listLoader').classList.remove('flex'); }
 
-  async function handleCredentialResponse(response) {
+  /* ═══════════════════════════  GOOGLE SIGN-IN  ══════════════════ */
 
-    const b64     = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(decodeURIComponent(
-      atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-    ));
-    const email = payload.email;
+  function handleCredentialResponse(response) {
+    log('AUTH', 'Credential received, decoding…');
 
-    $('authStatus').classList.remove('hidden');
-    $('authStatus').textContent = '';
-
-    const res = await api({ action: 'history', email: email });
-
-    if (res.success) {
-      currentEmail = email;
-      saveSession();
-      cachedHistory = res.history || [];
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(cachedHistory));
-      hideLoader();
-      renderLinks(cachedHistory);
-      stampSync();
-      showApp();
-    } else {
-      $('authStatus').classList.add('hidden');
-      // A network hiccup during sign-in shouldn't look like "you're banned" —
-      // only an explicit Unauthorized response should lock the user out.
-      showDenied(!!res._networkError);
+    let email;
+    try {
+      const b64     = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(decodeURIComponent(
+        atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
+      ));
+      email = payload.email;
+      log('AUTH', 'Decoded email:', email);
+    } catch (e) {
+      logErr('AUTH', 'Failed to decode Google credential:', e);
+      showToast('Sign-in error — please try again', true);
+      return;
     }
+
+    // Show a visible "verifying" status
+    $('authStatus').textContent = 'Verifying your account…';
+    $('authStatus').classList.remove('hidden');
+
+    // Verify with the backend (fetches history = proves the email is allowed)
+    api({ action: 'history', email: email }).then(res => {
+      if (res.success) {
+        log('AUTH', 'Authorized ✓  links:', (res.history || []).length);
+        currentEmail = email;
+        saveSession();
+        cachedHistory = res.history || [];
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(cachedHistory));
+        hideLoader();
+        renderLinks(cachedHistory);
+        stampSync();
+        showApp();
+      } else {
+        warn('AUTH', 'Denied:', res.message);
+        $('authStatus').classList.add('hidden');
+        showDenied(!!res._networkError);
+      }
+    }).catch(e => {
+      logErr('AUTH', 'Unexpected error during auth:', e);
+      $('authStatus').classList.add('hidden');
+      showDenied(true);
+    });
   }
 
   function logout() {
+    log('AUTH', 'Logging out');
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(HISTORY_KEY);
     currentEmail = '';
@@ -483,26 +600,28 @@
     localStorage.setItem(SESSION_KEY, JSON.stringify({ email: currentEmail, ts: Date.now() }));
   }
 
+  /* ═══════════════════════════  SYNC  ═════════════════════════════ */
+
   function startSync() {
     stopSync();
-    if (document.visibilityState === 'hidden') return; // will resume on visibilitychange
+    if (document.visibilityState === 'hidden') return;
     syncTimer = setInterval(() => {
       if (currentEmail && !isMutating) syncData(true);
-    }, SYNC_INTERVAL_MS);
+    }, SYNC_INTERVAL);
   }
 
   function stopSync() {
     if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
   }
 
-  async function syncData(silent = false) {
+  async function syncData(silent) {
     if (!currentEmail || isMutating) return;
     const mySeq = ++syncSeq;
 
     if (!silent && !cachedHistory.length) showLoader();
 
     const res = await api({ action: 'history', email: currentEmail });
-    if (mySeq !== syncSeq) return;  
+    if (mySeq !== syncSeq) return;          // stale response
 
     hideLoader();
 
@@ -514,8 +633,7 @@
       renderLinks(cachedHistory);
       stampSync();
     } else if (res._networkError) {
-      // Transient — keep showing the last known list, just flag the indicator.
-      setSyncIndicator(false);
+      setSyncIndicator(false);               // transient — keep showing cached data
     } else if ((res.message || '').includes('Unauthorized')) {
       showDenied(false);
     }
@@ -529,21 +647,31 @@
     $('lastSyncedLabel').textContent = '· ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
+  /* ═══════════════════════════  CREATE  ═══════════════════════════ */
+
   async function handleSubmit() {
     const url    = $('originalUrl').value.trim();
     const title  = $('linkTitle').value.trim();
     const alias  = $('customAlias').value.trim();
     const errBox = $('errorBox');
 
+    if (!url) {
+      errBox.textContent = 'Please enter a URL.';
+      errBox.classList.remove('hidden');
+      return;
+    }
+
     errBox.classList.add('hidden');
-    $('submitBtn').disabled = true;
-    $('btnText').textContent = 'Wait, generating';
-    $('btnLoader').style.display = 'block';
+    $('submitBtn').disabled       = true;
+    $('btnText').textContent      = 'Wait, generating';
+    $('btnLoader').style.display  = 'block';
     isMutating = true;
 
     try {
+      log('CREATE', 'Sending create request…', { url, title, alias });
+
       const res = await api({
-        action: 'create', url, title, alias,
+        action: 'create', url: url, title: title, alias: alias,
         email: currentEmail, domain: DOMAIN
       });
 
@@ -551,11 +679,13 @@
         if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
         errBox.textContent = res.message || 'Something went wrong.';
         errBox.classList.remove('hidden');
+        warn('CREATE', 'Server said no:', res.message);
         return;
       }
 
+      log('CREATE', 'Success:', res);
       saveSession();
-      $('shortLink').value = res.shortLink;
+      $('shortLink').value        = res.shortLink;
       $('resultTitle').textContent = res.title || 'Link Created';
       $('resultCard').classList.remove('hidden');
       $('shortenerForm').classList.add('hidden');
@@ -565,7 +695,6 @@
         $('resultDupNote').classList.remove('hidden');
       } else {
         $('resultDupNote').classList.add('hidden');
-
         cachedHistory.unshift({
           title: res.title, source: url,
           shortCode: res.shortLink.replace(DOMAIN, ''),
@@ -573,10 +702,15 @@
         });
         renderLinks(cachedHistory, true);
       }
+
+    } catch (e) {
+      logErr('CREATE', 'Unexpected error:', e);
+      errBox.textContent = 'Unexpected error: ' + e.message;
+      errBox.classList.remove('hidden');
     } finally {
       isMutating = false;
-      $('submitBtn').disabled = false;
-      $('btnText').textContent = 'Generate a Short Url';
+      $('submitBtn').disabled      = false;
+      $('btnText').textContent     = 'Generate a Short Url';
       $('btnLoader').style.display = 'none';
       syncData(true);
     }
@@ -592,12 +726,15 @@
     $('originalUrl').focus();
   }
 
+  /* ═══════════════════════════  DELETE  ═══════════════════════════ */
+
   async function deleteLink(code) {
     if (pendingCodes.has(code)) return;
     if (!confirm('Permanently delete /' + code + '?')) return;
 
+    log('DELETE', 'Deleting', code);
     pendingCodes.add(code);
-    renderLinks(cachedHistory); // re-render to show the disabled/pending state on this row
+    renderLinks(cachedHistory);
 
     const idx     = cachedHistory.findIndex(h => h.shortCode === code);
     const removed = idx > -1 ? cachedHistory.splice(idx, 1)[0] : null;
@@ -605,15 +742,18 @@
 
     isMutating = true;
     try {
-      const res = await api({ action: 'delete', code, email: currentEmail });
+      const res = await api({ action: 'delete', code: code, email: currentEmail });
       if (!res.success) {
         if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
         showToast(res.message || 'Delete failed', true);
-        // Rollback
         if (removed && idx > -1) { cachedHistory.splice(idx, 0, removed); renderLinks(cachedHistory); }
       } else {
         showToast('Deleted!');
       }
+    } catch (e) {
+      logErr('DELETE', e);
+      showToast('Delete failed — network error', true);
+      if (removed && idx > -1) { cachedHistory.splice(idx, 0, removed); renderLinks(cachedHistory); }
     } finally {
       pendingCodes.delete(code);
       isMutating = false;
@@ -621,11 +761,13 @@
     }
   }
 
+  /* ═══════════════════════════  EDIT  ═════════════════════════════ */
+
   function openEditModal(code, currentUrl, currentTitle) {
-    $('editCode').value          = code;
-    $('editCodeDisplay').value   = '/' + code;
-    $('editUrl').value           = currentUrl;
-    $('editTitle').value         = currentTitle;
+    $('editCode').value        = code;
+    $('editCodeDisplay').value = '/' + code;
+    $('editUrl').value         = currentUrl;
+    $('editTitle').value       = currentTitle;
     $('editError').classList.add('hidden');
     $('editModal').classList.add('open');
     $('editUrl').focus();
@@ -646,9 +788,9 @@
       return;
     }
 
-    $('editSaveBtn').disabled = true;
-    $('editSaveText').textContent = 'Saving…';
-    $('editSaveLoader').style.display = 'block';
+    $('editSaveBtn').disabled          = true;
+    $('editSaveText').textContent      = 'Saving…';
+    $('editSaveLoader').style.display  = 'block';
     $('editError').classList.add('hidden');
 
     const item    = cachedHistory.find(h => h.shortCode === code);
@@ -662,7 +804,7 @@
 
     isMutating = true;
     try {
-      const params = { action: 'update', code, url: newUrl, email: currentEmail };
+      const params = { action: 'update', code: code, url: newUrl, email: currentEmail };
       if (newTitle) params.title = newTitle;
       const res = await api(params);
 
@@ -670,17 +812,21 @@
         if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
         $('editError').textContent = res.message || 'Update failed.';
         $('editError').classList.remove('hidden');
-
         if (item) { item.source = prevUrl; item.title = prevTtl; renderLinks(cachedHistory); }
         return;
       }
 
       showToast('Updated!');
       closeEditModal();
+    } catch (e) {
+      logErr('EDIT', e);
+      $('editError').textContent = 'Network error — please retry.';
+      $('editError').classList.remove('hidden');
+      if (item) { item.source = prevUrl; item.title = prevTtl; renderLinks(cachedHistory); }
     } finally {
       isMutating = false;
-      $('editSaveBtn').disabled = false;
-      $('editSaveText').textContent = 'Save';
+      $('editSaveBtn').disabled         = false;
+      $('editSaveText').textContent     = 'Save';
       $('editSaveLoader').style.display = 'none';
       syncData(true);
     }
@@ -696,21 +842,23 @@
     if (e.key === 'Enter' && (e.target === $('editUrl') || e.target === $('editTitle'))) submitEdit();
   });
 
+  /* ═══════════════════════════  RENDER  ═══════════════════════════ */
+
   function renderLinks(data, animateFirst) {
     const c = $('linksContainer');
     c.classList.remove('hidden');
 
     if (!data || !data.length) {
       c.innerHTML = '<div class="text-center py-12 w-full">' +
-        '<p class="text-gray-400 font-bold uppercase tracking-widest text-xs">No links to yet</p></div>';
+        '<p class="text-gray-400 font-bold uppercase tracking-widest text-xs">No links yet</p></div>';
       return;
     }
 
     c.innerHTML = data.map((item, i) => {
-      const code  = esc(item.shortCode);
-      const src   = esc(item.source);
-      const title = esc(item.title);
-      const link  = esc(item.shortLink);
+      const code   = esc(item.shortCode);
+      const src    = esc(item.source);
+      const title  = esc(item.title);
+      const link   = esc(item.shortLink);
       const clicks = parseInt(item.clicks, 10) || 0;
       const busy   = pendingCodes.has(item.shortCode);
 
@@ -767,12 +915,13 @@
     });
   }
 
+  /* ═══════════════════════════  CLIPBOARD / TOAST  ═══════════════ */
+
   async function copyToClipboard(text) {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
       } else {
-        // Fallback for non-secure contexts / older browsers
         const ta = document.createElement('textarea');
         ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
         document.body.appendChild(ta); ta.focus(); ta.select();
@@ -791,7 +940,7 @@
 
   function showToast(msg, isError) {
     const t = $('toast');
-    t.textContent = msg || 'Done';
+    t.textContent  = msg || 'Done';
     t.style.background = isError ? '#ef4444' : '#facc15';
     t.style.color      = isError ? '#fff'    : '#000';
     t.classList.add('show');
