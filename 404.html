@@ -16,29 +16,21 @@
     *, *::before, *::after { box-sizing: border-box; }
     body {
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      margin: 0; padding: 1rem;
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
+      margin: 0; padding: 1rem; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
-
     .bg-img {
       position: fixed; inset: 0; z-index: -2;
       background: url('https://rukminim2.flixcart.com/fk-p-flap/3200/1560/image/27ee229500ca283e.jpg') center/cover no-repeat;
     }
     .bg-overlay {
-      position: fixed; inset: 0; z-index: -1;
-      background: rgba(0,0,0,.75);
+      position: fixed; inset: 0; z-index: -1; background: rgba(0,0,0,.75);
     }
-
     .loader {
       border: 4px solid rgba(0,0,0,.08); border-top-color: #facc15;
-      border-radius: 50%; width: 42px; height: 42px;
-      animation: spin .8s linear infinite;
-      margin: 0 auto 16px;
+      border-radius: 50%; width: 42px; height: 42px; animation: spin .8s linear infinite; margin: 0 auto 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     .fade-in { animation: fadeIn .3s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: scale(.95); } }
   </style>
@@ -48,133 +40,86 @@
   <div class="bg-img"></div>
   <div class="bg-overlay"></div>
 
-  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl
-                             border-4 border-yellow-400 shadow-2xl min-w-[280px]
-                             flex flex-col items-center">
+  <div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[280px] flex flex-col items-center">
     <div class="loader"></div>
-    <p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">
-      Wait, sending you there >>>
-    </p>
-    <a id="manualLink" href="#" class="hidden mt-4 text-[10px] font-bold text-blue-600 underline">
-      Taking a while — tap here to continue
-    </a>
+    <p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">Sending you there >></p>
+    <a id="manualLink" href="#" class="hidden mt-4 text-[10px] font-bold text-blue-600 underline">Tap here to continue</a>
   </div>
 
-  <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl
-                           max-w-xs w-full border-4 border-gray-200 shadow-2xl
-                           flex-col items-center fade-in">
+  <div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-xs w-full border-4 border-gray-200 shadow-2xl flex-col items-center fade-in">
     <svg class="w-14 h-14 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667
-               1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464
-               0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
     </svg>
-    <h2 id="errorTitle" class="text-xl font-black text-red-600 mb-2 uppercase tracking-widest
-               border-b-2 border-red-100 pb-2 w-full">Link Inactive</h2>
-    <p id="errorMsg" class="text-gray-600 mt-3 font-bold text-xs leading-relaxed">
-      This link is invalid or has been deleted.
-    </p>
-    <button id="retryBtn" onclick="location.reload()"
-       class="hidden mt-3 inline-block bg-gray-100 text-black font-bold text-xs uppercase
-              tracking-widest px-6 py-2.5 rounded-xl hover:bg-gray-200 transition-colors">
-      Retry
-    </button>
-    <a href="./"
-       class="mt-3 inline-block bg-black text-white font-bold text-xs uppercase
-              tracking-widest px-6 py-2.5 rounded-xl hover:bg-yellow-400
-              hover:text-black transition-colors">
-      Go Home
-    </a>
+    <h2 id="errorTitle" class="text-xl font-black text-red-600 mb-2 uppercase tracking-widest border-b-2 border-red-100 pb-2 w-full">Link Inactive</h2>
+    <p id="errorMsg" class="text-gray-600 mt-3 font-bold text-xs leading-relaxed">This link is invalid or has been deleted.</p>
+    <a href="./" class="mt-4 inline-block bg-black text-white font-bold text-xs uppercase tracking-widest px-6 py-2.5 rounded-xl hover:bg-yellow-400 hover:text-black transition-colors">Go Home</a>
   </div>
 
   <script>
   'use strict';
-
   const API = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
   const FETCH_TIMEOUT_MS = 8000;
-  const RETRY_DELAY_MS = 900;
 
   function fetchWithTimeout(url, ms) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), ms);
-    return fetch(url, { cache: 'no-store', signal: controller.signal })
-      .finally(() => clearTimeout(timer));
+    return fetch(url, { cache: 'no-store', signal: controller.signal }).finally(() => clearTimeout(timer));
   }
 
-  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
   (async function redirect() {
-
     let code = new URLSearchParams(window.location.search).get('code');
-
     if (!code) {
-      const segs = window.location.pathname
-        .replace(/\/+$/, '')
-        .split('/')
-        .filter(Boolean);
-
+      const segs = window.location.pathname.replace(/\/+$/, '').split('/').filter(Boolean);
       code = segs.length > 0 ? segs[segs.length - 1] : '';
     }
-
     if (!code && window.location.search.length > 1 && !window.location.search.includes('=')) {
       code = window.location.search.substring(1);
     }
-
     if (!code || code.toLowerCase() === 'url' || /\.html?$/i.test(code)) {
-      return showError('Link Inactive', 'This link is invalid or has been deleted.', false);
+      return showError('Link Inactive', 'This link is invalid or has been deleted.');
     }
 
-    // A fallback manual link appears if this is taking unusually long
-    // (slow network / cold Apps Script start), so the user isn't stuck staring at a spinner.
     const slowTimer = setTimeout(() => {
-      $('manualLink').href = '#';
-      $('manualLink').classList.remove('hidden');
+      document.getElementById('manualLink').href = '#';
+      document.getElementById('manualLink').classList.remove('hidden');
     }, 4000);
 
-    let lastNetworkFailure = false;
+    try {
+      const res = await fetchWithTimeout(API + '?code=' + encodeURIComponent(code) + '&_ts=' + Date.now(), FETCH_TIMEOUT_MS).then(r => r.json());
+      clearTimeout(slowTimer);
 
-    // One retry on a genuine network failure (timeout/offline) before declaring the link dead —
-    // a transient blip shouldn't tell the user their link was deleted.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const res = await fetchWithTimeout(
-          API + '?code=' + encodeURIComponent(code) + '&_ts=' + Date.now(),
-          FETCH_TIMEOUT_MS
-        ).then(r => r.json());
-
-        clearTimeout(slowTimer);
-
-        if (res.success && res.url) {
-          $('statusText').textContent = 'Redirecting…';
-          $('statusText').classList.replace('text-gray-900', 'text-yellow-600');
-          $('manualLink').href = res.url;
-          $('manualLink').textContent = 'Not redirected? Tap here';
-          $('manualLink').classList.remove('hidden');
-          window.location.replace(res.url);
-        } else {
-          showError('Link Inactive', res.message || 'This link is invalid or has been deleted.', false);
+      if (res.success && res.url) {
+        // Rule 14: Check for preview bots before firing the click tracker
+        const ua = navigator.userAgent.toLowerCase();
+        const isBot = /bot|crawler|spider|crawling|facebook|twitter|slack|whatsapp|telegram|discord/i.test(ua);
+        
+        if (!isBot) {
+          // Rule 10: Asynchronous, non-blocking click register
+          fetch(API, { method: 'POST', body: JSON.stringify({ action: 'log_click', code: code }) }).catch(()=>{});
         }
-        return;
-      } catch (err) {
-        lastNetworkFailure = true;
-        if (attempt === 0) await sleep(RETRY_DELAY_MS);
-      }
-    }
 
-    clearTimeout(slowTimer);
-    if (lastNetworkFailure) {
-      showError('Connection Problem', "Couldn't reach the server. Check your connection.", true);
+        // Rule 12: Forward incoming query parameters to the destination url
+        const finalUrl = new URL(res.url);
+        const incomingParams = new URLSearchParams(window.location.search);
+        incomingParams.delete('code'); // drop internal parameter
+        incomingParams.forEach((v, k) => finalUrl.searchParams.set(k, v));
+
+        document.getElementById('statusText').textContent = 'Redirecting…';
+        window.location.replace(finalUrl.toString() + window.location.hash);
+      } else {
+        showError('Link Inactive', res.message || 'This link is invalid or has been deleted.');
+      }
+    } catch (err) {
+      clearTimeout(slowTimer);
+      showError('Connection Problem', "Couldn't reach the server. Check your connection.");
     }
   })();
 
-  function $(id) { return document.getElementById(id); }
-
-  function showError(title, msg, showRetry) {
-    $('loadingUI').classList.add('hidden');
-    $('errorTitle').textContent = title;
-    $('errorMsg').textContent = msg;
-    $('retryBtn').classList.toggle('hidden', !showRetry);
-    const err = $('errorUI');
+  function showError(title, msg) {
+    document.getElementById('loadingUI').classList.add('hidden');
+    document.getElementById('errorTitle').textContent = title;
+    document.getElementById('errorMsg').textContent = msg;
+    const err = document.getElementById('errorUI');
     err.classList.remove('hidden');
     err.classList.add('flex');
   }
