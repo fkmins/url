@@ -1,46 +1,108 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Linker</title><link rel="icon" href="https://files.catbox.moe/dkajo4.png">
-<!-- Rule 1: Preconnects -->
-<link rel="preconnect" href="https://script.google.com"><link rel="preconnect" href="https://script.googleusercontent.com">
-<!-- Rule 9: CSP (Strict execution bounds) -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src https://script.google.com https://*.googleusercontent.com;">
-<script src="https://cdn.tailwindcss.com/3.4.17"></script>
-<style>*,*::before,*::after{box-sizing:border-box}body{font-family:system-ui,sans-serif;margin:0;padding:1rem;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}.bg-img{position:fixed;inset:0;z-index:-2;background:url('https://rukminim2.flixcart.com/fk-p-flap/3200/1560/image/27ee229500ca283e.jpg') center/cover no-repeat}.bg-overlay{position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,.75)}.loader{border:4px solid rgba(0,0,0,.08);border-top-color:#facc15;border-radius:50%;width:42px;height:42px;animation:spin .8s linear infinite;margin:0 auto 16px}@keyframes spin{to{transform:rotate(360deg)}}.fade-in{animation:fadeIn .3s ease}@keyframes fadeIn{from{opacity:0;transform:scale(.95)}}</style>
-</head><body>
-<div class="bg-img"></div><div class="bg-overlay"></div>
-<div id="loadingUI" class="relative z-10 text-center bg-white p-8 rounded-3xl border-4 border-yellow-400 shadow-2xl min-w-[280px] flex flex-col items-center">
-<div class="loader"></div><p id="statusText" class="text-gray-900 font-black uppercase tracking-widest text-xs">Redirecting...</p></div>
-<div id="errorUI" class="hidden relative z-10 text-center bg-white p-8 rounded-3xl max-w-xs w-full border-4 border-gray-200 shadow-2xl flex-col items-center fade-in">
-<h2 id="errorTitle" class="text-xl font-black text-red-600 mb-2 uppercase tracking-widest border-b-2 border-red-100 pb-2 w-full">Link Inactive</h2>
-<p id="errorMsg" class="text-gray-600 mt-3 font-bold text-xs">This link is invalid or has been deleted.</p>
-<a href="./" class="mt-4 inline-block bg-black text-white font-bold text-xs uppercase px-6 py-2.5 rounded-xl hover:bg-yellow-400 hover:text-black">Go Home</a></div>
+<!DOCTYPE html><html lang="en" class="dark:bg-gray-900"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Linker Workspace</title><link rel="icon" href="https://files.catbox.moe/dkajo4.png">
+<link rel="preconnect" href="https://script.google.com"><link rel="preconnect" href="https://accounts.google.com">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://accounts.google.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src https://script.google.com https://*.googleusercontent.com https://accounts.google.com;">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script><script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Rule 20: Service Worker Registration -->
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});</script>
+<style>*,*::before,*::after{box-sizing:border-box}body{font-family:system-ui,sans-serif;margin:0;padding:0;min-height:100vh;overflow-y:auto;overflow-x:hidden}.bg-wolf{position:fixed;inset:0;z-index:-2;background:url('https://wallpaperaccess.com/full/8532104.jpg') center/cover no-repeat}.bg-overlay{position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,.80)}.spinner{border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;width:18px;height:18px;animation:spin .7s linear infinite;display:none}.spinner-dark{border:4px solid rgba(0,0,0,.08);border-top-color:#facc15;border-radius:50%;width:36px;height:36px;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}#toast{visibility:hidden;min-width:200px;background:#facc15;color:#000;text-align:center;border-radius:10px;padding:12px 20px;position:fixed;z-index:100;left:50%;bottom:30px;transform:translateX(-50%);opacity:0;transition:opacity .25s,bottom .25s;font-weight:900;text-transform:uppercase;font-size:12px;box-shadow:0 4px 20px rgba(250,204,21,.4)}#toast.show{visibility:visible;opacity:1;bottom:50px}.pulse-dot{width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block;box-shadow:0 0 0 0 rgba(34,197,94,.7);animation:pulse 1.6s infinite}.pulse-dot.offline{background:#f59e0b;animation:none;box-shadow:none}@keyframes pulse{0%{transform:scale(.95)}70%{transform:scale(1);box-shadow:0 0 0 8px rgba(34,197,94,0)}100%{transform:scale(.95)}}.slim-scroll::-webkit-scrollbar{width:5px}.slim-scroll::-webkit-scrollbar-track{background:transparent}.slim-scroll::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:99px}.modal-backdrop{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}.modal-backdrop.open{display:flex}</style>
+</head><body class="flex flex-col items-center justify-center min-h-screen py-8 px-4 dark:text-white">
+<div class="bg-wolf"></div><div class="bg-overlay"></div>
+<div id="authScreen" class="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200 dark:border-gray-700"><img src="https://files.catbox.moe/dkajo4.png" class="w-20 h-20 rounded-full border-4 border-black dark:border-gray-600 mb-6 mx-auto object-cover"><div id="g_id_onload" data-client_id="1024803666625-2dsd2ebgn5h4s6pg085bmssbk4kmqdbs.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div><div class="g_id_signin flex justify-center w-full" data-type="standard" data-theme="outline" data-size="large"></div><p id="authStatus" class="mt-5 text-xs text-gray-400 font-bold hidden">Verifying details…</p></div>
+<div id="unauthorizedModal" class="fixed inset-0 z-50 bg-black/95 hidden flex-col items-center justify-center p-4"><div class="bg-white dark:bg-gray-800 max-w-md w-full rounded-3xl border-4 border-red-500 p-8 text-center"><h2 class="text-2xl font-black text-red-600 mb-2 uppercase">Access Denied</h2><p class="text-gray-700 dark:text-gray-300 font-bold text-xs" id="deniedText">Not authorized.</p></div></div>
+<div id="appScreen" class="relative z-10 w-full max-w-6xl hidden"><div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+  <!-- Create Panel -->
+  <div class="lg:col-span-5 flex flex-col h-full"><div class="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-2xl border-4 border-gray-200 dark:border-gray-700 flex-1 flex flex-col items-center relative"><button onclick="logout()" class="absolute top-6 right-6 text-[10px] font-black uppercase text-gray-400 hover:text-red-600">Logout</button><img src="https://files.catbox.moe/dkajo4.png" class="w-16 h-16 rounded-full border-4 border-black dark:border-gray-600 mb-6 object-cover"><form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4 w-full"><input type="url" id="originalUrl" required placeholder="Enter URL (Ctrl+N)" class="w-full text-center border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-xl px-4 py-3 font-bold focus:border-black outline-none text-xs"><div class="grid grid-cols-2 gap-3 w-full"><input type="text" id="customAlias" placeholder="Custom Alias" class="w-full text-center border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-lg px-2 py-2 focus:border-black outline-none text-xs"><input type="text" id="linkTitle" placeholder="Title (optional)" class="w-full text-center border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-lg px-2 py-2 focus:border-black outline-none text-xs"></div><button type="submit" id="submitBtn" class="w-full bg-black dark:bg-yellow-400 dark:text-black hover:bg-yellow-400 hover:text-black text-white font-black py-3.5 rounded-xl flex justify-center items-center gap-2 uppercase text-xs"><span id="btnText">Generate Short Url</span><div id="btnLoader" class="spinner"></div></button></form><div id="resultCard" class="hidden mt-4 pt-4 border-t-2 border-gray-100 dark:border-gray-700 w-full flex flex-col items-center"><p id="resultTitle" class="text-xs font-black text-gray-700 dark:text-gray-200 uppercase text-center w-full mb-3"></p><div class="bg-yellow-50 dark:bg-gray-700 border-2 border-yellow-400 rounded-xl p-3 flex flex-col gap-2 mb-3 w-full"><input type="text" id="shortLink" readonly class="bg-transparent dark:text-white text-black font-black w-full text-center outline-none text-sm"><button onclick="handleShare($('shortLink').value)" class="w-full bg-black text-white dark:bg-yellow-400 dark:text-black font-bold py-2 rounded-lg hover:bg-yellow-400 hover:text-black uppercase text-xs">Share / Copy</button></div><button onclick="resetForm()" class="w-full bg-gray-100 dark:bg-gray-700 dark:text-white hover:bg-gray-200 text-black font-bold py-2 rounded-xl text-xs uppercase">Create Another</button></div><div id="errorBox" class="hidden mt-3 bg-red-100 text-red-900 p-2.5 rounded-xl text-xs font-bold text-center w-full"></div></div></div>
+  <!-- History Panel -->
+  <div class="lg:col-span-7 flex flex-col h-full"><div class="w-full bg-white dark:bg-gray-800 rounded-3xl p-6 border-4 border-gray-200 dark:border-gray-700 shadow-2xl h-full flex flex-col items-center min-h-[500px]"><div class="flex items-center justify-center gap-2 bg-green-50 dark:bg-green-900 border border-green-300 dark:border-green-700 px-3 py-1 rounded-full mb-4"><span class="pulse-dot" id="syncDot"></span><span class="text-[10px] text-green-800 dark:text-green-200 uppercase font-black">Live</span></div><input type="text" id="searchInput" placeholder="Search links… (Ctrl+K)" class="w-full text-center border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-xl px-4 py-2.5 mb-4 outline-none focus:border-black font-medium text-xs"><div id="listLoader" class="flex-col items-center justify-center flex-1 flex w-full"><div class="spinner-dark dark:border-yellow-400"></div></div><div class="flex-1 overflow-y-auto space-y-4 pr-1 slim-scroll w-full" style="max-height:480px" id="linksScroll"><div id="linksContainer" class="hidden space-y-4 w-full"></div><div id="paginationControls" class="hidden w-full flex justify-between items-center py-4 border-t-2 border-gray-100 dark:border-gray-700 mt-4"><button onclick="prevPage()" id="prevBtn" class="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg text-xs font-bold uppercase disabled:opacity-30">Prev</button><span id="pageInfo" class="text-[10px] font-black text-gray-400 uppercase tracking-widest"></span><button onclick="nextPage()" id="nextBtn" class="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg text-xs font-bold uppercase disabled:opacity-30">Next</button></div></div></div></div>
+</div></div>
+<!-- Edit Modal -->
+<div id="editModal" class="modal-backdrop"><div class="bg-white dark:bg-gray-800 rounded-3xl p-6 border-4 border-gray-200 dark:border-gray-700 w-full max-w-md mx-4"><h3 class="text-sm font-black uppercase text-center mb-4">Edit Link</h3><input type="hidden" id="editCode"><div class="space-y-3"><input id="editCodeDisplay" readonly class="w-full text-center border-2 border-gray-100 dark:border-gray-600 dark:bg-gray-700 rounded-lg px-3 py-2 text-gray-400 text-xs"><input type="url" id="editUrl" class="w-full text-center border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs"><input type="text" id="editTitle" class="w-full text-center border-2 border-gray-200 dark:border-gray-600 dark:bg-gray-700 rounded-lg px-3 py-2 text-xs"></div><div class="flex gap-3 mt-5"><button onclick="closeEditModal()" class="flex-1 bg-gray-100 dark:bg-gray-700 py-2.5 rounded-xl text-xs font-bold uppercase">Cancel</button><button onclick="submitEdit()" id="editSaveBtn" class="flex-1 bg-black text-white dark:bg-yellow-400 dark:text-black py-2.5 rounded-xl text-xs font-bold uppercase flex justify-center gap-2"><span id="editSaveText">Save</span><div id="editSaveLoader" class="spinner"></div></button></div></div></div>
+<div id="toast">Link Copied</div>
 <script>
 'use strict';
-const API = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
-(async function redirect() {
-  let u = new URLSearchParams(window.location.search), c = u.get('code');
-  if(!c) { const s = window.location.pathname.replace(/\/+$/,'').split('/').filter(Boolean); c = s.length>0 ? s[s.length-1] : ''; }
-  if(!c && window.location.search.length>1 && !window.location.search.includes('=')) c = window.location.search.substring(1);
-  if(!c || c.toLowerCase()==='url' || /\.html?$/i.test(c)) return err('Link Inactive', 'Invalid or deleted link.');
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec', DOMAIN='https://fkmins.github.io/url/', SESS='linkerSession', ITEMS_PER_PAGE=15;
+let em='', tmr=null, hist=[], filtHist=[], page=1; const $=i=>document.getElementById(i), esc=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-  // Rule 2: Client-side redirect caching
-  const localCache = localStorage.getItem('linker_cache_' + c);
-  if (localCache) {
-    if (!/bot|crawler/i.test(navigator.userAgent)) fetch(API, {method:'POST',body:JSON.stringify({action:'log_click',code:c}),headers:{'Content-Type':'text/plain'}}).catch(()=>{});
-    const fUrl = new URL(localCache); u.delete('code'); u.forEach((v,k)=>fUrl.searchParams.set(k,v));
-    return window.location.replace(fUrl.toString() + window.location.hash);
+// Rule 13: Dashboard Keyboard Shortcuts
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); $('searchInput').focus(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') { e.preventDefault(); $('originalUrl').focus(); }
+});
+
+async function apiGet(p){ return await (await fetch(SCRIPT_URL+'?'+new URLSearchParams({...p,_ts:Date.now()}),{cache:'no-store'})).json(); }
+async function apiPost(p){ return await (await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(p),headers:{'Content-Type':'text/plain;charset=utf-8'}})).json(); }
+window.onload=()=>{ const s=JSON.parse(localStorage.getItem(SESS)||'null'); if(s && Date.now()-s.ts<900000){em=s.email;showApp();syncData();}else showAuth(); };
+document.addEventListener('visibilitychange',()=>em?(document.visibilityState==='visible'?syncData():clearInterval(tmr)):null);
+function showAuth(){$('appScreen').classList.add('hidden');$('authScreen').classList.remove('hidden');}
+function showApp(){$('authScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');tmr=setInterval(syncData,60000);}
+function handleCredentialResponse(r){
+  $('authStatus').classList.remove('hidden'); em=JSON.parse(decodeURIComponent(atob(r.credential.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''))).email;
+  apiGet({action:'history',email:em}).then(rs=>{if(rs.success){localStorage.setItem(SESS,JSON.stringify({email:em,ts:Date.now()}));hist=rs.history;processData();showApp();}else{$('authScreen').classList.add('hidden');$('unauthorizedModal').classList.remove('hidden');$('unauthorizedModal').classList.add('flex');}});
+}
+function logout(){localStorage.removeItem(SESS);location.reload();}
+async function syncData(force){
+  if(!em)return; if(force){$('linksContainer').classList.add('hidden');$('listLoader').classList.remove('hidden');}
+  try{const r=await apiGet({action:'history',email:em});$('syncDot').classList.remove('offline');if(r.success){hist=r.history;processData();}}catch(e){$('syncDot').classList.add('offline');}
+}
+
+// Rule 5: Optimistic UI for Create
+async function handleSubmit(){
+  const u=$('originalUrl').value.trim(), t=$('linkTitle').value.trim(), c=$('customAlias').value.trim(); if(!u)return;
+  $('submitBtn').disabled=true;$('btnText').textContent='Wait…';$('btnLoader').style.display='block';
+  const optimisticItem = { title: t||'Generating...', source: u, shortCode: c||'⏳', shortLink: '...', clicks: 0 };
+  hist.unshift(optimisticItem); processData();
+  try{
+    const r=await apiPost({action:'create',email:em,url:u,title:t,alias:c,domain:DOMAIN});
+    if(r.success){ $('shortLink').value=r.shortLink;$('resultTitle').textContent=r.title;$('shortenerForm').classList.add('hidden');$('resultCard').classList.remove('hidden'); syncData(true); }
+    else { hist.shift(); processData(); $('errorBox').textContent=r.message;$('errorBox').classList.remove('hidden'); }
+  }catch(e){ hist.shift(); processData(); }
+  finally { $('submitBtn').disabled=false;$('btnText').textContent='Generate';$('btnLoader').style.display='none'; }
+}
+
+// Rule 5: Optimistic UI for Delete
+async function deleteLink(code){
+  if(!confirm(`Delete /${code}?`))return;
+  const idx = hist.findIndex(h=>h.shortCode===code), backup = hist[idx];
+  hist.splice(idx,1); processData(); // Update instantly
+  try{ const r = await apiPost({action:'delete',email:em,code:code}); if(!r.success) throw new Error(); syncData(true); }
+  catch(e){ hist.splice(idx,0,backup); processData(); copyToClipboard('Delete failed'); }
+}
+
+function openEditModal(c,u,t){$('editCode').value=c;$('editCodeDisplay').value='/'+c;$('editUrl').value=u;$('editTitle').value=t;$('editModal').classList.add('open');}
+function closeEditModal(){$('editModal').classList.remove('open');}
+async function submitEdit(){$('editSaveBtn').disabled=true;await apiPost({action:'update',email:em,code:$('editCode').value,url:$('editUrl').value.trim(),title:$('editTitle').value.trim()});$('editSaveBtn').disabled=false;closeEditModal();syncData(true);}
+let sT; $('searchInput').addEventListener('input',()=>{clearTimeout(sT);sT=setTimeout(()=>{page=1;processData();},300);});
+function processData(){
+  const q=$('searchInput').value.toLowerCase(); filtHist=q?hist.filter(h=>h.title.toLowerCase().includes(q)||h.source.toLowerCase().includes(q)||h.shortCode.toLowerCase().includes(q)):hist;
+  $('listLoader').classList.add('hidden');$('linksContainer').classList.remove('hidden');
+  const maxClicks = Math.max(1, ...hist.map(h => h.clicks || 0)); // Rule 16 prep
+  const pD=filtHist.slice((page-1)*ITEMS_PER_PAGE, page*ITEMS_PER_PAGE);
+  $('linksContainer').innerHTML=pD.map(h=>`
+    <div class="relative overflow-hidden bg-gray-50 dark:bg-gray-800 p-5 rounded-2xl border-2 border-gray-200 dark:border-gray-700 shadow-sm text-center">
+      <!-- Rule 16: Visual Click Indicator (Background Bar) -->
+      <div class="absolute bottom-0 left-0 h-1 bg-green-400 dark:bg-green-600 opacity-70" style="width:${(h.clicks/maxClicks)*100}%"></div>
+      <p class="font-black text-sm truncate w-full max-w-[300px] mx-auto">${esc(h.title)}</p>
+      <p class="text-[10px] text-gray-400 truncate mb-2 w-full max-w-[300px] mx-auto">${esc(h.source)}</p>
+      <a href="${esc(h.shortLink)}" target="_blank" class="text-xs font-black text-blue-600 dark:text-blue-400 block mb-2">${esc(h.shortLink)} <span class="text-gray-500 text-[10px]">(${h.clicks} clicks)</span></a>
+      <div class="flex gap-2 justify-center mt-3 relative z-10">
+        <button onclick="handleShare('${h.shortLink}')" class="bg-black text-white dark:bg-gray-600 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Copy</button>
+        <button onclick="openEditModal('${h.shortCode}','${esc(h.source)}','${esc(h.title)}')" class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Edit</button>
+        <button onclick="deleteLink('${h.shortCode}')" class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Del</button>
+      </div>
+    </div>`).join('')||'<p class="text-xs font-bold text-gray-400 text-center py-8">No links found.</p>';
+  if(filtHist.length>ITEMS_PER_PAGE){$('paginationControls').classList.remove('hidden');$('paginationControls').classList.add('flex');$('pageInfo').textContent=`Page ${page} of ${Math.ceil(filtHist.length/ITEMS_PER_PAGE)}`;$('prevBtn').disabled=page===1;$('nextBtn').disabled=(page*ITEMS_PER_PAGE)>=filtHist.length;}else$('paginationControls').classList.add('hidden');
+}
+function prevPage(){if(page>1){page--;processData();$('linksScroll').scrollTop=0;}}
+function nextPage(){if((page*ITEMS_PER_PAGE)<filtHist.length){page++;processData();$('linksScroll').scrollTop=0;}}
+function resetForm(){$('shortenerForm').classList.remove('hidden');$('resultCard').classList.add('hidden');$('originalUrl').focus();}
+
+// Rule 11: Web Share API Integration
+async function handleShare(l) {
+  if (navigator.share && window.matchMedia('(pointer: coarse)').matches) {
+    try { await navigator.share({ title: 'Short Link', url: l }); return; } catch(e){}
   }
-
-  try {
-    const act = new AbortController(), tmr = setTimeout(()=>act.abort(), 15000);
-    const r = await fetch(API+'?code='+encodeURIComponent(c)+'&_ts='+Date.now(), {signal:act.signal}).then(r=>r.json()).finally(()=>clearTimeout(tmr));
-    if(r.success && r.url) {
-      localStorage.setItem('linker_cache_' + c, r.url); // Save cache
-      if (!/bot|crawler/i.test(navigator.userAgent)) fetch(API, {method:'POST',body:JSON.stringify({action:'log_click',code:c}),headers:{'Content-Type':'text/plain'}}).catch(()=>{});
-      const fUrl = new URL(r.url); u.delete('code'); u.forEach((v,k)=>fUrl.searchParams.set(k,v));
-      window.location.replace(fUrl.toString() + window.location.hash);
-    } else err('Link Inactive', r.message || 'Link invalid.');
-  } catch (e) { err('Connection Problem', "Couldn't reach server."); }
-})();
-function err(t,m){ document.getElementById('loadingUI').classList.add('hidden'); document.getElementById('errorTitle').textContent=t; document.getElementById('errorMsg').textContent=m; const e=document.getElementById('errorUI'); e.classList.remove('hidden'); e.classList.add('flex'); }
+  copyToClipboard(l);
+}
+function copyToClipboard(txt){navigator.clipboard.writeText(txt);const t=$('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);}
 </script></body></html>
