@@ -3,301 +3,132 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Linker</title>
+  <title>Linker Workspace</title>
   <link rel="icon" href="https://files.catbox.moe/dkajo4.png">
-  <meta name="description" content="Linker — Private URL Shortener Workspace">
-  <meta property="og:title" content="Linker">
-  <meta property="og:image" content="https://files.catbox.moe/dkajo4.png">
-
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body {
-      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      margin: 0; padding: 0;
-      min-height: 100vh;
-      overflow-y: auto; overflow-x: hidden;
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0; padding: 0; min-height: 100vh; overflow-y: auto; overflow-x: hidden;
     }
-
-    .bg-wolf    { position: fixed; inset: 0; z-index: -2;
-                  background: url('https://wallpaperaccess.com/full/8532104.jpg') center/cover no-repeat; }
-    .bg-overlay { position: fixed; inset: 0; z-index: -1;
-                  background: rgba(0,0,0,.80); }
-
-    .snow {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image:
-        radial-gradient(white, rgba(255,255,255,0) 2px),
-        radial-gradient(white, rgba(255,255,255,0) 1px),
-        radial-gradient(white, rgba(255,255,255,0) 2px);
-      background-size: 550px 550px, 350px 350px, 250px 250px;
-      animation: snow 20s linear infinite;
-    }
-    @keyframes snow {
-      to { background-position: 500px 1000px, 400px 400px, 300px 300px; }
-    }
-
-    .spinner {
-      border: 3px solid rgba(255,255,255,.3); border-top-color: #fff;
-      border-radius: 50%; width: 18px; height: 18px;
-      animation: spin .7s linear infinite; display: none;
-    }
-    .spinner-dark {
-      border: 4px solid rgba(0,0,0,.08); border-top-color: #facc15;
-      border-radius: 50%; width: 36px; height: 36px;
-      animation: spin .8s linear infinite;
-    }
+    .bg-wolf { position: fixed; inset: 0; z-index: -2; background: url('https://wallpaperaccess.com/full/8532104.jpg') center/cover no-repeat; }
+    .bg-overlay { position: fixed; inset: 0; z-index: -1; background: rgba(0,0,0,.80); }
+    .spinner { border: 3px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; width: 18px; height: 18px; animation: spin .7s linear infinite; display: none; }
+    .spinner-dark { border: 4px solid rgba(0,0,0,.08); border-top-color: #facc15; border-radius: 50%; width: 36px; height: 36px; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
     #toast {
-      visibility: hidden; min-width: 200px;
-      background: #facc15; color: #000; text-align: center;
-      border-radius: 10px; padding: 12px 20px;
-      position: fixed; z-index: 100; left: 50%; bottom: 30px;
-      transform: translateX(-50%); opacity: 0;
-      transition: opacity .25s, bottom .25s;
-      font-weight: 900; text-transform: uppercase; font-size: 12px;
-      box-shadow: 0 4px 20px rgba(250,204,21,.4);
+      visibility: hidden; min-width: 200px; background: #facc15; color: #000; text-align: center;
+      border-radius: 10px; padding: 12px 20px; position: fixed; z-index: 100; left: 50%; bottom: 30px;
+      transform: translateX(-50%); opacity: 0; transition: opacity .25s, bottom .25s; font-weight: 900;
+      text-transform: uppercase; font-size: 12px; box-shadow: 0 4px 20px rgba(250,204,21,.4);
     }
     #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
-
-    .pulse-dot {
-      width: 8px; height: 8px; background: #22c55e; border-radius: 50%;
-      display: inline-block;
-      box-shadow: 0 0 0 0 rgba(34,197,94,.7);
-      animation: pulse 1.6s infinite;
-    }
+    .pulse-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 0 rgba(34,197,94,.7); animation: pulse 1.6s infinite; }
     .pulse-dot.offline { background: #f59e0b; animation: none; box-shadow: none; }
-    @keyframes pulse {
-      0%   { transform: scale(.95); box-shadow: 0 0 0 0   rgba(34,197,94,.7); }
-      70%  { transform: scale(1);   box-shadow: 0 0 0 8px rgba(34,197,94,0);  }
-      100% { transform: scale(.95); box-shadow: 0 0 0 0   rgba(34,197,94,0);  }
-    }
-
-    .slim-scroll::-webkit-scrollbar       { width: 5px; }
+    @keyframes pulse { 0% { transform: scale(.95); } 70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34,197,94,0); } 100% { transform: scale(.95); } }
+    .slim-scroll::-webkit-scrollbar { width: 5px; }
     .slim-scroll::-webkit-scrollbar-track { background: transparent; }
     .slim-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
-
-    .item-enter { animation: item-in .25s ease; }
-    @keyframes item-in { from { opacity: 0; transform: translateY(-8px); } }
-
-    .modal-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.6);
-                      display: none; align-items: center; justify-content: center;
-                      backdrop-filter: blur(4px); }
+    .modal-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal-backdrop.open { display: flex; }
-
     [data-action]:disabled { opacity: .5; cursor: wait; }
-
-    .diag { font-size: 10px; color: #9ca3af; margin-top: 12px; }
-    .diag .ok  { color: #22c55e; }
-    .diag .err { color: #ef4444; }
   </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen py-8 px-4">
+  <div class="bg-wolf"></div><div class="bg-overlay"></div>
 
-  <div class="bg-wolf"></div>
-  <div class="bg-overlay"></div>
-  <div class="snow"></div>
-
-  <!-- ======================== AUTH SCREEN ======================== -->
+  <!-- Auth Screen -->
   <div id="authScreen" class="relative z-10 w-full max-w-md bg-white rounded-3xl p-8 shadow-2xl text-center border-4 border-gray-200">
-    <div class="flex flex-col items-center mb-8">
-      <img src="https://files.catbox.moe/dkajo4.png" alt="Linker"
-           class="w-20 h-20 rounded-full border-4 border-black mb-4 object-cover shadow-lg bg-white">
-    </div>
-
-    <div id="g_id_onload"
-         data-client_id="1024803666625-2dsd2ebgn5h4s6pg085bmssbk4kmqdbs.apps.googleusercontent.com"
-         data-context="signin"
-         data-ux_mode="popup"
-         data-callback="handleCredentialResponse"
-         data-auto_prompt="false"></div>
-    <div class="g_id_signin flex justify-center w-full"
-         data-type="standard" data-shape="rectangular"
-         data-theme="outline"  data-text="signin_with"
-         data-size="large"     data-logo_alignment="left"></div>
-
-    <p id="authStatus" class="mt-5 text-xs text-gray-400 font-bold hidden">Verifying details, wait</p>
-
-    <div class="diag" id="diagBar">
-      <span id="diagApi">API: checking…</span> · <span id="diagGis">GIS: checking…</span>
-    </div>
+    <img src="https://files.catbox.moe/dkajo4.png" class="w-20 h-20 rounded-full border-4 border-black mb-6 mx-auto object-cover shadow-lg">
+    <div id="g_id_onload" data-client_id="1024803666625-2dsd2ebgn5h4s6pg085bmssbk4kmqdbs.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
+    <div class="g_id_signin flex justify-center w-full" data-type="standard" data-theme="outline" data-size="large"></div>
+    <p id="authStatus" class="mt-5 text-xs text-gray-400 font-bold hidden">Verifying details…</p>
   </div>
 
-  <!-- ======================== DENIED MODAL ======================== -->
-  <div id="unauthorizedModal"
-       class="fixed inset-0 z-50 bg-black/95 hidden flex-col items-center justify-center p-4 backdrop-blur-md">
-    <div class="bg-white max-w-md w-full rounded-3xl border-4 border-red-500 p-8 text-center
-                shadow-[0_0_50px_rgba(239,68,68,.5)] flex flex-col items-center">
-      <svg class="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-      </svg>
+  <!-- Denied Modal -->
+  <div id="unauthorizedModal" class="fixed inset-0 z-50 bg-black/95 hidden flex-col items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-white max-w-md w-full rounded-3xl border-4 border-red-500 p-8 text-center flex flex-col items-center">
       <h2 class="text-2xl font-black text-red-600 mb-2 uppercase tracking-widest" id="deniedTitle">Access Denied</h2>
-      <p class="text-gray-700 font-bold text-xs leading-relaxed" id="deniedText">
-        You are not authorized to use this site.<br>Please contact <strong>dhrubajyotid1.vc</strong>
-      </p>
-      <button id="deniedRetryBtn" onclick="retryAfterDenied()"
-              class="hidden mt-4 bg-black text-white font-bold text-xs uppercase tracking-widest
-                     px-6 py-2.5 rounded-xl hover:bg-yellow-400 hover:text-black transition-colors">
-        Try Again
-      </button>
+      <p class="text-gray-700 font-bold text-xs" id="deniedText">Not authorized. Contact Admin.</p>
     </div>
   </div>
 
-  <!-- ======================== MAIN APP ======================== -->
+  <!-- Main App -->
   <div id="appScreen" class="relative z-10 w-full max-w-6xl hidden">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-
-      <!-- LEFT: Create short link -->
+      
+      <!-- Create Panel -->
       <div class="lg:col-span-5 flex flex-col h-full">
-        <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-gray-200
-                    flex-1 flex flex-col items-center">
-
-          <div class="flex flex-col items-center mb-6 relative w-full text-center">
-            <button onclick="logout()"
-                    class="absolute top-0 right-0 text-[10px] font-black uppercase tracking-widest
-                           text-gray-400 hover:text-red-600 transition-colors">Logout</button>
-            <img src="https://files.catbox.moe/dkajo4.png" alt="Linker"
-                 class="w-16 h-16 rounded-full border-4 border-black mb-3 object-cover shadow-lg bg-white">
-          </div>
-
-          <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();"
-                class="space-y-4 w-full flex flex-col items-center">
-            <input type="url" id="originalUrl" required placeholder="Enter URL"
-                   class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-3
-                          bg-gray-50 text-black font-bold focus:border-black focus:bg-white
-                          outline-none text-xs transition-all">
-
+        <div class="bg-white rounded-3xl p-6 shadow-2xl border-4 border-gray-200 flex-1 flex flex-col items-center">
+          <button onclick="logout()" class="absolute top-6 right-6 text-[10px] font-black uppercase text-gray-400 hover:text-red-600">Logout</button>
+          <img src="https://files.catbox.moe/dkajo4.png" class="w-16 h-16 rounded-full border-4 border-black mb-6 object-cover shadow-lg">
+          
+          <form id="shortenerForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4 w-full">
+            <input type="url" id="originalUrl" required placeholder="Enter URL" class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-gray-50 font-bold focus:border-black outline-none text-xs">
             <div class="grid grid-cols-2 gap-3 w-full">
-              <div class="flex flex-col items-center">
-                <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Custom Link</label>
-                <input type="text" id="customAlias" placeholder="E.g. poster"
-                       class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2
-                              bg-gray-50 text-black font-medium focus:border-black focus:bg-white
-                              outline-none text-xs">
-              </div>
-              <div class="flex flex-col items-center">
-                <label class="block text-[10px] font-bold text-gray-900 uppercase mb-1">Link Title</label>
-                <input type="text" id="linkTitle" placeholder="E.g. Poster Folder"
-                       class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2
-                              bg-gray-50 text-black font-medium focus:border-black focus:bg-white
-                              outline-none text-xs">
-              </div>
+              <input type="text" id="customAlias" placeholder="Custom Alias" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 focus:border-black outline-none text-xs">
+              <input type="text" id="linkTitle" placeholder="Title (optional)" class="w-full text-center border-2 border-gray-200 rounded-lg px-2 py-2 bg-gray-50 focus:border-black outline-none text-xs">
             </div>
-
-            <button type="submit" id="submitBtn"
-                    class="w-full bg-black hover:bg-yellow-400 hover:text-black border-2 border-black
-                           text-white font-black py-3.5 rounded-xl transition-all flex justify-center
-                           items-center gap-2 uppercase tracking-widest shadow-md text-xs">
-              <span id="btnText">Generate a Short Url</span>
-              <div id="btnLoader" class="spinner"></div>
+            <button type="submit" id="submitBtn" class="w-full bg-black hover:bg-yellow-400 hover:text-black text-white font-black py-3.5 rounded-xl flex justify-center items-center gap-2 uppercase text-xs">
+              <span id="btnText">Generate Short Url</span><div id="btnLoader" class="spinner"></div>
             </button>
           </form>
 
           <div id="resultCard" class="hidden mt-4 pt-4 border-t-2 border-gray-100 w-full flex flex-col items-center">
-            <p id="resultTitle" class="text-xs font-black text-gray-700 uppercase tracking-wide
-                                       text-center truncate w-full mb-3"></p>
-            <p id="resultDupNote" class="hidden text-[10px] font-bold text-amber-600 mb-2 text-center"></p>
-            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3
-                        flex flex-col items-center gap-2 mb-3 shadow-sm w-full">
-              <input type="text" id="shortLink" readonly
-                     class="bg-transparent text-black font-black w-full text-center
-                            outline-none cursor-text text-sm truncate">
-              <button onclick="copyLink()"
-                      class="w-full bg-black text-white font-bold py-2 rounded-lg
-                             hover:bg-yellow-400 hover:text-black transition-colors
-                             uppercase border-2 border-black text-xs tracking-widest shadow-sm">
-                Copy Link
-              </button>
+            <p id="resultTitle" class="text-xs font-black text-gray-700 uppercase text-center w-full mb-3"></p>
+            <div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3 flex flex-col gap-2 mb-3 w-full">
+              <input type="text" id="shortLink" readonly class="bg-transparent text-black font-black w-full text-center outline-none text-sm">
+              <button onclick="copyLink()" class="w-full bg-black text-white font-bold py-2 rounded-lg hover:bg-yellow-400 hover:text-black uppercase text-xs">Copy Link</button>
             </div>
-            <button onclick="resetForm()"
-                    class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-2
-                           rounded-xl text-xs transition-colors uppercase tracking-widest">
-              Create Another
-            </button>
+            <button onclick="resetForm()" class="w-full bg-gray-100 hover:bg-gray-200 text-black font-bold py-2 rounded-xl text-xs uppercase">Create Another</button>
           </div>
-
-          <div id="errorBox"
-               class="hidden mt-3 bg-red-100 text-red-900 p-2.5 rounded-xl text-xs
-                      font-bold text-center border-2 border-red-200 w-full"></div>
+          <div id="errorBox" class="hidden mt-3 bg-red-100 text-red-900 p-2.5 rounded-xl text-xs font-bold text-center w-full"></div>
         </div>
       </div>
 
-      <!-- RIGHT: Link history -->
+      <!-- History Panel -->
       <div class="lg:col-span-7 flex flex-col h-full">
-        <div class="w-full bg-white rounded-3xl p-6 border-4 border-gray-200 shadow-2xl
-                    h-full flex flex-col items-center min-h-[500px]">
-
-          <div class="flex flex-col items-center mb-4 pb-4 border-b-2 border-gray-100 w-full text-center">
-            <div class="flex items-center justify-center gap-2 bg-green-50
-                        border border-green-300 px-3 py-1 rounded-full">
-              <span class="pulse-dot" id="syncDot"></span>
-              <span class="text-[10px] text-green-800 uppercase font-black">Hey 😆</span>
-              <span id="lastSyncedLabel" class="text-[9px] text-green-700 font-bold ml-1"></span>
+        <div class="w-full bg-white rounded-3xl p-6 border-4 border-gray-200 shadow-2xl h-full flex flex-col items-center min-h-[500px]">
+          <div class="flex items-center justify-center gap-2 bg-green-50 border border-green-300 px-3 py-1 rounded-full mb-4">
+            <span class="pulse-dot" id="syncDot"></span><span class="text-[10px] text-green-800 uppercase font-black">Live</span>
+          </div>
+          <input type="text" id="searchInput" placeholder="Search links…" class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-2.5 mb-4 outline-none focus:border-black font-medium text-xs">
+          
+          <div id="listLoader" class="flex-col items-center justify-center flex-1 flex w-full">
+            <div class="spinner-dark mb-3"></div>
+          </div>
+          
+          <!-- History Wrapper -->
+          <div class="flex-1 overflow-y-auto space-y-4 pr-1 slim-scroll w-full" style="max-height:480px" id="linksScroll">
+            <div id="linksContainer" class="hidden space-y-4 w-full"></div>
+            <!-- Pagination Controls (Rule 20) -->
+            <div id="paginationControls" class="hidden w-full flex justify-between items-center py-4 border-t-2 border-gray-100 mt-4">
+              <button onclick="prevPage()" id="prevBtn" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold uppercase hover:bg-gray-200 disabled:opacity-30">Prev</button>
+              <span id="pageInfo" class="text-[10px] font-black text-gray-400 uppercase tracking-widest"></span>
+              <button onclick="nextPage()" id="nextBtn" class="bg-gray-100 px-4 py-2 rounded-lg text-xs font-bold uppercase hover:bg-gray-200 disabled:opacity-30">Next</button>
             </div>
           </div>
-
-          <input type="text" id="searchInput" oninput="filterHistory()" placeholder="Search links…"
-                 class="w-full text-center border-2 border-gray-200 rounded-xl px-4 py-2.5
-                        mb-4 outline-none focus:border-black font-medium text-xs
-                        transition-all shadow-inner">
-
-          <div id="listLoader" class="flex-col items-center justify-center flex-1 flex my-8 w-full text-center">
-            <div class="spinner-dark mb-3"></div>
-            <p class="font-bold text-gray-400 uppercase tracking-widest text-[10px]">Loading Database</p>
-          </div>
-
-          <div id="linksContainer"
-               class="flex-1 overflow-y-auto space-y-4 pr-1 slim-scroll w-full hidden"
-               style="max-height:480px"></div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- ======================== EDIT MODAL ======================== -->
+  <!-- Edit Modal -->
   <div id="editModal" class="modal-backdrop">
-    <div class="bg-white rounded-3xl p-6 border-4 border-gray-200 shadow-2xl
-                w-full max-w-md mx-4 flex flex-col items-center">
-      <h3 class="text-sm font-black uppercase tracking-widest mb-4 text-gray-900">Edit Link</h3>
+    <div class="bg-white rounded-3xl p-6 border-4 border-gray-200 w-full max-w-md mx-4">
+      <h3 class="text-sm font-black uppercase text-center mb-4">Edit Link</h3>
       <input type="hidden" id="editCode">
-      <div class="w-full space-y-3">
-        <div>
-          <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Short Code</label>
-          <input id="editCodeDisplay" readonly
-                 class="w-full text-center border-2 border-gray-100 rounded-lg px-3 py-2
-                        bg-gray-50 text-gray-400 font-bold text-xs cursor-not-allowed">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">New Destination URL</label>
-          <input type="url" id="editUrl"
-                 class="w-full text-center border-2 border-gray-200 rounded-lg px-3 py-2
-                        bg-gray-50 text-black font-medium focus:border-black focus:bg-white
-                        outline-none text-xs transition-all">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Title (optional)</label>
-          <input type="text" id="editTitle"
-                 class="w-full text-center border-2 border-gray-200 rounded-lg px-3 py-2
-                        bg-gray-50 text-black font-medium focus:border-black focus:bg-white
-                        outline-none text-xs transition-all">
-        </div>
+      <div class="space-y-3">
+        <input id="editCodeDisplay" readonly class="w-full text-center border-2 border-gray-100 rounded-lg px-3 py-2 bg-gray-50 text-gray-400 text-xs">
+        <input type="url" id="editUrl" class="w-full text-center border-2 border-gray-200 rounded-lg px-3 py-2 text-xs">
+        <input type="text" id="editTitle" class="w-full text-center border-2 border-gray-200 rounded-lg px-3 py-2 text-xs">
       </div>
-      <div id="editError" class="hidden mt-3 text-xs font-bold text-red-600 text-center w-full"></div>
-      <div class="flex gap-3 mt-5 w-full">
-        <button onclick="closeEditModal()"
-                class="flex-1 bg-gray-100 hover:bg-gray-200 text-black font-bold py-2.5
-                       rounded-xl text-xs uppercase tracking-widest transition-colors">Cancel</button>
-        <button onclick="submitEdit()" id="editSaveBtn"
-                class="flex-1 bg-black hover:bg-yellow-400 hover:text-black text-white font-bold
-                       py-2.5 rounded-xl text-xs uppercase tracking-widest transition-colors
-                       flex items-center justify-center gap-2">
-          <span id="editSaveText">Save</span>
-          <div id="editSaveLoader" class="spinner"></div>
+      <div class="flex gap-3 mt-5">
+        <button onclick="closeEditModal()" class="flex-1 bg-gray-100 py-2.5 rounded-xl text-xs font-bold uppercase">Cancel</button>
+        <button onclick="submitEdit()" id="editSaveBtn" class="flex-1 bg-black text-white py-2.5 rounded-xl text-xs font-bold uppercase flex justify-center gap-2">
+          <span id="editSaveText">Save</span><div id="editSaveLoader" class="spinner"></div>
         </button>
       </div>
     </div>
@@ -307,646 +138,166 @@
 
   <script>
   'use strict';
-
-  /* ═══════════════════════════  CONFIG  ═══════════════════════════ */
-
-  // !! IMPORTANT !! — After creating a NEW deployment of your Apps Script,
-  // paste the new /exec URL here.  Simply saving the script is NOT enough;
-  // you must do  Deploy → New deployment → Web app → copy the URL.
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
-
-  // The base URL where short links resolve.  Must end with a slash.
-  // This must match the GitHub Pages URL where 404.html is deployed.
-  const DOMAIN     = 'https://fkmins.github.io/url/';
-
-  const SESSION_KEY    = 'linkerSession';
-  const HISTORY_KEY    = 'linkerHistory';
-  const SESSION_TTL    = 15 * 60 * 1000;   // 15 min
-  const SYNC_INTERVAL  = 12000;            // 12 s
-  const API_TIMEOUT    = 15000;            // 15 s per attempt
-  const API_RETRIES    = 2;
-
-  /* ═══════════════════════════  STATE  ════════════════════════════ */
-
-  let currentEmail  = '';
-  let syncTimer     = null;
-  let isMutating    = false;
-  let syncSeq       = 0;
-  let cachedHistory = [];
-  let pendingCodes  = new Set();
-  let deniedWasNetworkError = false;
-
-  /* ═══════════════════════════  HELPERS  ══════════════════════════ */
+  const SCRIPT_URL    = 'https://script.google.com/macros/s/AKfycbwEP7CIdySsPZgvccP295RY0oVoMc_9knwN8WbEfHUSq32Q7kWTv-A26hhK1Tp3zsZC/exec';
+  const DOMAIN        = 'https://fkmins.github.io/url/';
+  const SESSION_KEY   = 'linkerSession';
+  const SYNC_INTERVAL = 60000; // Rule 6: Increased to 60s to prevent quota exhaustion
+  
+  let currentEmail = '', syncTimer = null, cachedHistory = [];
+  let filteredHistory = [], currentPage = 1; 
+  const ITEMS_PER_PAGE = 15; // Rule 20
 
   const $ = id => document.getElementById(id);
-  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 
-  function esc(s) {
-    return String(s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+  // API Callers: Splitting GET vs POST based on mutation status (Rule 7)
+  async function apiGet(params) {
+    const qs = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
+    const r = await fetch(SCRIPT_URL + '?' + qs, { cache: 'no-store' });
+    return await r.json();
+  }
+  
+  async function apiPost(params) {
+    const r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(params) });
+    return await r.json();
   }
 
-  function log(tag, ...args)  { console.log('[Linker ' + tag + ']', ...args); }
-  function warn(tag, ...args) { console.warn('[Linker ' + tag + ']', ...args); }
-  function logErr(tag, ...args)  { console.error('[Linker ' + tag + ']', ...args); }
+  window.onload = () => {
+    const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    if (sess && Date.now() - sess.ts < 15 * 60 * 1000) {
+      currentEmail = sess.email;
+      showApp(); syncData();
+    } else showAuth();
+  };
 
-  /* ═══════════════════════════  API LAYER  ════════════════════════ */
-
-  // Google Apps Script web apps respond with a 302 → the fetch API follows
-  // the redirect automatically.  We add an AbortController timeout and
-  // detect HTML responses (sign of a misconfigured deployment).
-  async function rawApi(params) {
-    const qs  = new URLSearchParams({ ...params, _ts: Date.now() }).toString();
-    const url = SCRIPT_URL + '?' + qs;
-    log('API', 'GET', url.substring(0, 120) + '…');
-
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), API_TIMEOUT);
-
-    try {
-      const r = await fetch(url, {
-        cache: 'no-store',
-        redirect: 'follow',
-        signal: ctrl.signal
-      });
-      clearTimeout(timer);
-
-      // If Apps Script is deployed as "Anyone with Google account" instead
-      // of "Anyone", Google returns an HTML login page instead of JSON.
-      const ct = r.headers.get('content-type') || '';
-      if (!r.ok) {
-        logErr('API', 'HTTP', r.status, r.statusText);
-        throw new Error('HTTP ' + r.status);
-      }
-      if (ct.includes('text/html')) {
-        logErr('API', 'Got HTML instead of JSON — your Apps Script deployment is',
-            'likely set to "Anyone with Google account" instead of "Anyone".',
-            'Redeploy with access = Anyone.');
-        throw new Error('API returned HTML (check deployment access)');
-      }
-
-      const body = await r.json();
-      log('API', 'Response:', body);
-      return body;
-    } catch (e) {
-      clearTimeout(timer);
-      throw e;
-    }
-  }
-
-  async function api(params, attempts) {
-    attempts = attempts || API_RETRIES;
-    let lastErr;
-    for (let i = 0; i < attempts; i++) {
-      try {
-        return await rawApi(params);
-      } catch (e) {
-        lastErr = e;
-        warn('API', 'Attempt', i + 1, 'failed:', e.message);
-        if (i < attempts - 1) await sleep(600 * Math.pow(2, i));
-      }
-    }
-    logErr('API', 'All', attempts, 'attempts failed:', lastErr);
-    return { success: false, message: 'Network error — check your connection.', _networkError: true };
-  }
-
-  /* ═══════════════════════════  BOOT  ═════════════════════════════ */
-
-  window.addEventListener('load', () => {
-    log('BOOT', 'Page loaded');
-    runDiagnostics();
-
-    // Try to resume a stored session
-    try {
-      const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-      if (sess && Date.now() - sess.ts < SESSION_TTL) {
-        log('BOOT', 'Resuming session for', sess.email);
-        currentEmail = sess.email;
-
-        const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || 'null');
-        if (Array.isArray(saved) && saved.length) {
-          cachedHistory = saved;
-          hideLoader();
-          renderLinks(cachedHistory);
-        }
-        showApp();
-        syncData();
-        return;
-      }
-    } catch (_) {}
-
-    log('BOOT', 'No valid session — showing sign-in');
-    showAuth();
-  });
-
-  // Pause sync when tab is hidden; catch up immediately when visible again.
+  // Rule 6: Event-driven catch-up
   document.addEventListener('visibilitychange', () => {
     if (!currentEmail) return;
-    if (document.visibilityState === 'visible') {
-      startSync();
-      syncData(true);
-    } else {
-      stopSync();
-    }
+    document.visibilityState === 'visible' ? syncData() : clearInterval(syncTimer);
   });
 
-  /* ═══════════════════════════  DIAGNOSTICS  ═════════════════════ */
-
-  async function runDiagnostics() {
-    // 1. Check API connectivity
-    try {
-      const res = await rawApi({ action: 'ping' });
-      $('diagApi').textContent = 'API: ' + (res.success ? '✓ OK' : '✗ Error');
-      $('diagApi').className   = res.success ? 'ok' : 'err';
-    } catch (e) {
-      $('diagApi').textContent = 'API: ✗ Unreachable';
-      $('diagApi').className   = 'err';
-      logErr('DIAG', 'API ping failed:', e.message);
-    }
-
-    // 2. Check Google Identity Services
-    setTimeout(() => {
-      const gisOk = typeof google !== 'undefined' && google.accounts && google.accounts.id;
-      $('diagGis').textContent = 'GIS: ' + (gisOk ? '✓ Loaded' : '✗ Not loaded');
-      $('diagGis').className   = gisOk ? 'ok' : 'err';
-      if (!gisOk) logErr('DIAG', 'Google Identity Services library did not load.',
-                       'Check ad-blockers, network, or CSP headers.');
-    }, 2500);
+  function showAuth() { $('appScreen').classList.add('hidden');$('authScreen').classList.remove('hidden'); }
+  function showApp() { 
+    $('authScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');
+    syncTimer = setInterval(syncData, SYNC_INTERVAL);
   }
-
-  /* ═══════════════════════════  SCREEN SWITCHING  ════════════════ */
-
-  function showAuth() {
-    stopSync();
-    $('appScreen').classList.add('hidden');
-    $('unauthorizedModal').classList.add('hidden');
-    $('unauthorizedModal').classList.remove('flex');
-    $('authScreen').classList.remove('hidden');
-  }
-
-  function showApp() {
-    $('authScreen').classList.add('hidden');
-    $('unauthorizedModal').classList.add('hidden');
-    $('unauthorizedModal').classList.remove('flex');
-    $('appScreen').classList.remove('hidden');
-    startSync();
-  }
-
-  function showDenied(isNetworkError) {
-    deniedWasNetworkError = !!isNetworkError;
-    if (!isNetworkError) {
-      localStorage.removeItem(SESSION_KEY);
-      currentEmail = '';
-      cachedHistory = [];
-    }
-    stopSync();
-    $('linksContainer').innerHTML = '';
-    $('appScreen').classList.add('hidden');
-    $('authScreen').classList.add('hidden');
-
-    if (isNetworkError) {
-      $('deniedTitle').textContent = 'Connection Problem';
-      $('deniedText').innerHTML    = "Couldn't reach the server. Check your connection and try again.";
-      $('deniedRetryBtn').classList.remove('hidden');
-    } else {
-      $('deniedTitle').textContent = 'Access Denied';
-      $('deniedText').innerHTML    = 'You are not authorized to use this site.<br>Please contact <strong>dhrubajyotid1.vc</strong>';
-      $('deniedRetryBtn').classList.add('hidden');
-    }
-
-    $('unauthorizedModal').classList.remove('hidden');
-    $('unauthorizedModal').classList.add('flex');
-  }
-
-  function retryAfterDenied() {
-    $('unauthorizedModal').classList.add('hidden');
-    $('unauthorizedModal').classList.remove('flex');
-    try {
-      const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-      if (sess && Date.now() - sess.ts < SESSION_TTL) {
-        currentEmail = sess.email;
-        showApp();
-        syncData();
-        return;
-      }
-    } catch (_) {}
-    showAuth();
-  }
-
-  function showLoader() { $('listLoader').classList.remove('hidden'); $('listLoader').classList.add('flex'); }
-  function hideLoader() { $('listLoader').classList.add('hidden');    $('listLoader').classList.remove('flex'); }
-
-  /* ═══════════════════════════  GOOGLE SIGN-IN  ══════════════════ */
-
-  function handleCredentialResponse(response) {
-    log('AUTH', 'Credential received, decoding…');
-
-    let email;
-    try {
-      const b64     = response.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(decodeURIComponent(
-        atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')
-      ));
-      email = payload.email;
-      log('AUTH', 'Decoded email:', email);
-    } catch (e) {
-      logErr('AUTH', 'Failed to decode Google credential:', e);
-      showToast('Sign-in error — please try again', true);
-      return;
-    }
-
-    // Show a visible "verifying" status
-    $('authStatus').textContent = 'Verifying your account…';
+  
+  function handleCredentialResponse(resp) {
     $('authStatus').classList.remove('hidden');
-
-    // Verify with the backend (fetches history = proves the email is allowed)
-    api({ action: 'history', email: email }).then(res => {
+    const payload = JSON.parse(decodeURIComponent(atob(resp.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+    currentEmail = payload.email;
+    apiGet({ action: 'history', email: currentEmail }).then(res => {
       if (res.success) {
-        log('AUTH', 'Authorized ✓  links:', (res.history || []).length);
-        currentEmail = email;
-        saveSession();
-        cachedHistory = res.history || [];
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(cachedHistory));
-        hideLoader();
-        renderLinks(cachedHistory);
-        stampSync();
-        showApp();
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ email: currentEmail, ts: Date.now() }));
+        cachedHistory = res.history; processData(); showApp();
       } else {
-        warn('AUTH', 'Denied:', res.message);
-        $('authStatus').classList.add('hidden');
-        showDenied(!!res._networkError);
+        $('authScreen').classList.add('hidden');
+        $('unauthorizedModal').classList.remove('hidden');$('unauthorizedModal').classList.add('flex');
       }
-    }).catch(e => {
-      logErr('AUTH', 'Unexpected error during auth:', e);
-      $('authStatus').classList.add('hidden');
-      showDenied(true);
     });
   }
 
-  function logout() {
-    log('AUTH', 'Logging out');
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(HISTORY_KEY);
-    currentEmail = '';
-    cachedHistory = [];
-    stopSync();
-    $('linksContainer').innerHTML = '';
-    showAuth();
+  function logout() { localStorage.removeItem(SESSION_KEY); location.reload(); }
+
+  async function syncData(forceSpinner) {
+    if (!currentEmail) return;
+    if (forceSpinner) { $('linksContainer').classList.add('hidden');$('listLoader').classList.remove('hidden'); }
+    try {
+      const res = await apiGet({ action: 'history', email: currentEmail });
+      $('syncDot').classList.remove('offline');
+      if (res.success) { cachedHistory = res.history; processData(); }
+    } catch(e) { $('syncDot').classList.add('offline'); }
   }
-
-  function saveSession() {
-    localStorage.setItem(SESSION_KEY, JSON.stringify({ email: currentEmail, ts: Date.now() }));
-  }
-
-  /* ═══════════════════════════  SYNC  ═════════════════════════════ */
-
-  function startSync() {
-    stopSync();
-    if (document.visibilityState === 'hidden') return;
-    syncTimer = setInterval(() => {
-      if (currentEmail && !isMutating) syncData(true);
-    }, SYNC_INTERVAL);
-  }
-
-  function stopSync() {
-    if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
-  }
-
-  async function syncData(silent) {
-    if (!currentEmail || isMutating) return;
-    const mySeq = ++syncSeq;
-
-    if (!silent && !cachedHistory.length) showLoader();
-
-    const res = await api({ action: 'history', email: currentEmail });
-    if (mySeq !== syncSeq) return;          // stale response
-
-    hideLoader();
-
-    if (res.success) {
-      setSyncIndicator(true);
-      saveSession();
-      cachedHistory = res.history || [];
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(cachedHistory));
-      renderLinks(cachedHistory);
-      stampSync();
-    } else if (res._networkError) {
-      setSyncIndicator(false);               // transient — keep showing cached data
-    } else if ((res.message || '').includes('Unauthorized')) {
-      showDenied(false);
-    }
-  }
-
-  function setSyncIndicator(online) {
-    $('syncDot').classList.toggle('offline', !online);
-  }
-
-  function stampSync() {
-    $('lastSyncedLabel').textContent = '· ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  /* ═══════════════════════════  CREATE  ═══════════════════════════ */
 
   async function handleSubmit() {
-    const url    = $('originalUrl').value.trim();
-    const title  = $('linkTitle').value.trim();
-    const alias  = $('customAlias').value.trim();
-    const errBox = $('errorBox');
-
-    if (!url) {
-      errBox.textContent = 'Please enter a URL.';
-      errBox.classList.remove('hidden');
-      return;
-    }
-
-    errBox.classList.add('hidden');
-    $('submitBtn').disabled       = true;
-    $('btnText').textContent      = 'Wait, generating';
-    $('btnLoader').style.display  = 'block';
-    isMutating = true;
-
+    const url = $('originalUrl').value.trim();
+    if (!url) return;
+    
+    $('submitBtn').disabled = true; $('btnText').textContent = 'Wait…';$('btnLoader').style.display = 'block';
+    const params = { action: 'create', email: currentEmail, url: url, title: $('linkTitle').value.trim(), alias:$('customAlias').value.trim(), domain: DOMAIN };
+    
     try {
-      log('CREATE', 'Sending create request…', { url, title, alias });
-
-      const res = await api({
-        action: 'create', url: url, title: title, alias: alias,
-        email: currentEmail, domain: DOMAIN
-      });
-
-      if (!res.success) {
-        if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
-        errBox.textContent = res.message || 'Something went wrong.';
-        errBox.classList.remove('hidden');
-        warn('CREATE', 'Server said no:', res.message);
-        return;
-      }
-
-      log('CREATE', 'Success:', res);
-      saveSession();
-      $('shortLink').value        = res.shortLink;
-      $('resultTitle').textContent = res.title || 'Link Created';
-      $('resultCard').classList.remove('hidden');
-      $('shortenerForm').classList.add('hidden');
-
-      if (res.isDuplicate) {
-        $('resultDupNote').textContent = res.message || 'This URL was already shortened.';
-        $('resultDupNote').classList.remove('hidden');
+      const res = await apiPost(params); // Rule 7: POST
+      if (res.success) {
+        $('shortLink').value = res.shortLink; $('resultTitle').textContent = res.title;
+        $('shortenerForm').classList.add('hidden');$('resultCard').classList.remove('hidden');
+        syncData(true); // Rule 6: Event trigger update
       } else {
-        $('resultDupNote').classList.add('hidden');
-        cachedHistory.unshift({
-          title: res.title, source: url,
-          shortCode: res.shortLink.replace(DOMAIN, ''),
-          shortLink: res.shortLink, clicks: 0
-        });
-        renderLinks(cachedHistory, true);
+        $('errorBox').textContent = res.message; $('errorBox').classList.remove('hidden');
       }
-
-    } catch (e) {
-      logErr('CREATE', 'Unexpected error:', e);
-      errBox.textContent = 'Unexpected error: ' + e.message;
-      errBox.classList.remove('hidden');
     } finally {
-      isMutating = false;
-      $('submitBtn').disabled      = false;
-      $('btnText').textContent     = 'Generate a Short Url';
-      $('btnLoader').style.display = 'none';
-      syncData(true);
+      $('submitBtn').disabled = false; $('btnText').textContent = 'Generate';$('btnLoader').style.display = 'none';
     }
   }
-
-  function resetForm() {
-    $('shortenerForm').reset();
-    $('shortenerForm').classList.remove('hidden');
-    $('resultCard').classList.add('hidden');
-    $('resultDupNote').classList.add('hidden');
-    $('errorBox').classList.add('hidden');
-    $('errorBox').textContent = '';
-    $('originalUrl').focus();
-  }
-
-  /* ═══════════════════════════  DELETE  ═══════════════════════════ */
 
   async function deleteLink(code) {
-    if (pendingCodes.has(code)) return;
-    if (!confirm('Permanently delete /' + code + '?')) return;
-
-    log('DELETE', 'Deleting', code);
-    pendingCodes.add(code);
-    renderLinks(cachedHistory);
-
-    const idx     = cachedHistory.findIndex(h => h.shortCode === code);
-    const removed = idx > -1 ? cachedHistory.splice(idx, 1)[0] : null;
-    renderLinks(cachedHistory);
-
-    isMutating = true;
-    try {
-      const res = await api({ action: 'delete', code: code, email: currentEmail });
-      if (!res.success) {
-        if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
-        showToast(res.message || 'Delete failed', true);
-        if (removed && idx > -1) { cachedHistory.splice(idx, 0, removed); renderLinks(cachedHistory); }
-      } else {
-        showToast('Deleted!');
-      }
-    } catch (e) {
-      logErr('DELETE', e);
-      showToast('Delete failed — network error', true);
-      if (removed && idx > -1) { cachedHistory.splice(idx, 0, removed); renderLinks(cachedHistory); }
-    } finally {
-      pendingCodes.delete(code);
-      isMutating = false;
-      syncData(true);
-    }
+    if (!confirm(`Delete /${code}?`)) return;
+    await apiPost({ action: 'delete', email: currentEmail, code: code });
+    syncData(true);
   }
 
-  /* ═══════════════════════════  EDIT  ═════════════════════════════ */
-
-  function openEditModal(code, currentUrl, currentTitle) {
-    $('editCode').value        = code;
-    $('editCodeDisplay').value = '/' + code;
-    $('editUrl').value         = currentUrl;
-    $('editTitle').value       = currentTitle;
-    $('editError').classList.add('hidden');
+  function openEditModal(code, url, title) {
+    $('editCode').value = code; $('editCodeDisplay').value = '/' + code;
+    $('editUrl').value = url; $('editTitle').value = title;
     $('editModal').classList.add('open');
-    $('editUrl').focus();
   }
-
-  function closeEditModal() {
-    $('editModal').classList.remove('open');
-  }
+  function closeEditModal() { $('editModal').classList.remove('open'); }
 
   async function submitEdit() {
-    const code     = $('editCode').value;
-    const newUrl   = $('editUrl').value.trim();
-    const newTitle = $('editTitle').value.trim();
-
-    if (!newUrl) {
-      $('editError').textContent = 'URL cannot be empty.';
-      $('editError').classList.remove('hidden');
-      return;
-    }
-
-    $('editSaveBtn').disabled          = true;
-    $('editSaveText').textContent      = 'Saving…';
-    $('editSaveLoader').style.display  = 'block';
-    $('editError').classList.add('hidden');
-
-    const item    = cachedHistory.find(h => h.shortCode === code);
-    const prevUrl = item ? item.source : newUrl;
-    const prevTtl = item ? item.title  : '';
-    if (item) {
-      item.source = newUrl;
-      if (newTitle) item.title = newTitle;
-    }
-    renderLinks(cachedHistory);
-
-    isMutating = true;
-    try {
-      const params = { action: 'update', code: code, url: newUrl, email: currentEmail };
-      if (newTitle) params.title = newTitle;
-      const res = await api(params);
-
-      if (!res.success) {
-        if ((res.message || '').includes('Unauthorized')) { showDenied(false); return; }
-        $('editError').textContent = res.message || 'Update failed.';
-        $('editError').classList.remove('hidden');
-        if (item) { item.source = prevUrl; item.title = prevTtl; renderLinks(cachedHistory); }
-        return;
-      }
-
-      showToast('Updated!');
-      closeEditModal();
-    } catch (e) {
-      logErr('EDIT', e);
-      $('editError').textContent = 'Network error — please retry.';
-      $('editError').classList.remove('hidden');
-      if (item) { item.source = prevUrl; item.title = prevTtl; renderLinks(cachedHistory); }
-    } finally {
-      isMutating = false;
-      $('editSaveBtn').disabled         = false;
-      $('editSaveText').textContent     = 'Save';
-      $('editSaveLoader').style.display = 'none';
-      syncData(true);
-    }
+    $('editSaveBtn').disabled = true;
+    await apiPost({ action: 'update', email: currentEmail, code: $('editCode').value, url:$('editUrl').value.trim(), title: $('editTitle').value.trim() });$('editSaveBtn').disabled = false;
+    closeEditModal(); syncData(true);
   }
 
-  $('editModal')?.addEventListener('click', e => {
-    if (e.target === $('editModal')) closeEditModal();
+  // --- Rule 20: Debounce & Pagination ---
+  let searchTimeout;
+  $('searchInput').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => { currentPage = 1; processData(); }, 300);
   });
 
-  document.addEventListener('keydown', e => {
-    if (!$('editModal').classList.contains('open')) return;
-    if (e.key === 'Escape') closeEditModal();
-    if (e.key === 'Enter' && (e.target === $('editUrl') || e.target === $('editTitle'))) submitEdit();
-  });
-
-  /* ═══════════════════════════  RENDER  ═══════════════════════════ */
-
-  function renderLinks(data, animateFirst) {
-    const c = $('linksContainer');
-    c.classList.remove('hidden');
-
-    if (!data || !data.length) {
-      c.innerHTML = '<div class="text-center py-12 w-full">' +
-        '<p class="text-gray-400 font-bold uppercase tracking-widest text-xs">No links yet</p></div>';
-      return;
-    }
-
-    c.innerHTML = data.map((item, i) => {
-      const code   = esc(item.shortCode);
-      const src    = esc(item.source);
-      const title  = esc(item.title);
-      const link   = esc(item.shortLink);
-      const clicks = parseInt(item.clicks, 10) || 0;
-      const busy   = pendingCodes.has(item.shortCode);
-
-      return '<div class="bg-gray-50 p-5 rounded-3xl border-2 border-gray-200 flex flex-col items-center ' +
-        'filter-item gap-3 shadow-sm hover:border-black transition-all text-center' +
-        (animateFirst && i === 0 ? ' item-enter' : '') + '">' +
-        '<div class="w-full flex flex-col items-center">' +
-          '<p class="font-black text-gray-900 text-sm truncate search-target mb-1 w-full max-w-[300px]">' + title + '</p>' +
-          '<p class="text-[10px] text-gray-400 truncate search-target mb-3 font-medium w-full max-w-[300px]">' + src + '</p>' +
-          '<div class="flex flex-col items-center gap-2 mb-2 w-full">' +
-            '<a href="' + link + '" target="_blank" rel="noopener noreferrer" ' +
-              'class="text-xs font-black text-blue-600 truncate hover:underline search-target block w-full max-w-[300px]">' + link + '</a>' +
-            '<span class="text-[10px] font-black text-gray-800 bg-yellow-300 border border-black px-3 py-1 rounded-lg">' +
-              'Clicks: ' + clicks + '</span>' +
-          '</div>' +
-        '</div>' +
-        '<div class="flex gap-2 justify-center w-full mt-1">' +
-          '<button data-action="copy" data-link="' + link + '" ' +
-            'class="bg-black text-white px-4 py-2 rounded-xl text-xs font-black uppercase ' +
-            'hover:bg-yellow-400 hover:text-black transition-colors shadow-sm">Copy</button>' +
-          '<button data-action="edit" data-code="' + code + '" data-url="' + src + '" data-title="' + title + '" ' + (busy ? 'disabled' : '') + ' ' +
-            'class="bg-blue-100 text-blue-800 px-4 py-2 rounded-xl text-xs font-black uppercase ' +
-            'hover:bg-blue-600 hover:text-white transition-colors">Edit</button>' +
-          '<button data-action="del" data-code="' + code + '" ' + (busy ? 'disabled' : '') + ' ' +
-            'class="bg-red-100 text-red-800 px-4 py-2 rounded-xl text-xs font-black uppercase ' +
-            'hover:bg-red-600 hover:text-white transition-colors">' + (busy ? '…' : 'Del') + '</button>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    filterHistory();
-  }
-
-  $('linksContainer')?.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn || btn.disabled) return;
-
-    const action = btn.dataset.action;
-    if (action === 'copy') {
-      copyToClipboard(btn.dataset.link);
-    } else if (action === 'edit') {
-      openEditModal(btn.dataset.code, btn.dataset.url, btn.dataset.title);
-    } else if (action === 'del') {
-      deleteLink(btn.dataset.code);
-    }
-  });
-
-  function filterHistory() {
+  function processData() {
     const q = $('searchInput').value.toLowerCase();
-    document.querySelectorAll('.filter-item').forEach(node => {
-      const haystack = Array.from(node.querySelectorAll('.search-target'))
-        .map(n => n.textContent).join(' ').toLowerCase();
-      node.style.display = haystack.includes(q) ? 'flex' : 'none';
-    });
+    filteredHistory = q ? cachedHistory.filter(h => h.title.toLowerCase().includes(q) || h.source.toLowerCase().includes(q) || h.shortCode.toLowerCase().includes(q)) : cachedHistory;
+    renderPage();
   }
 
-  /* ═══════════════════════════  CLIPBOARD / TOAST  ═══════════════ */
+  function renderPage() {
+    $('listLoader').classList.add('hidden');$('linksContainer').classList.remove('hidden');
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end = start + ITEMS_PER_PAGE;
+    const pageData = filteredHistory.slice(start, end);
 
-  async function copyToClipboard(text) {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text);
-      } else {
-        const ta = document.createElement('textarea');
-        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-        document.body.appendChild(ta); ta.focus(); ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-      }
-      showToast('Link Copied');
-    } catch (_) {
-      showToast('Could not copy — long-press to copy manually', true);
+    $('linksContainer').innerHTML = pageData.map(h => 
+      `<div class="bg-gray-50 p-5 rounded-2xl border-2 border-gray-200 shadow-sm text-center">
+         <p class="font-black text-sm truncate w-full max-w-[300px] mx-auto">${esc(h.title)}</p>
+         <p class="text-[10px] text-gray-400 truncate mb-2 w-full max-w-[300px] mx-auto">${esc(h.source)}</p>
+         <a href="${esc(h.shortLink)}" target="_blank" class="text-xs font-black text-blue-600 block mb-2">${esc(h.shortLink)}</a>
+         <div class="flex gap-2 justify-center mt-3">
+           <button onclick="copyToClipboard('${h.shortLink}')" class="bg-black text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-yellow-400 hover:text-black">Copy</button>
+           <button onclick="openEditModal('${h.shortCode}', '${esc(h.source)}', '${esc(h.title)}')" class="bg-blue-100 text-blue-800 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Edit</button>
+           <button onclick="deleteLink('${h.shortCode}')" class="bg-red-100 text-red-800 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase">Del</button>
+         </div>
+       </div>`
+    ).join('') || '<p class="text-xs font-bold text-gray-400 text-center py-8">No links found.</p>';
+
+    // Manage Pagination UI
+    if (filteredHistory.length > ITEMS_PER_PAGE) {
+      $('paginationControls').classList.remove('hidden');
+      $('paginationControls').classList.add('flex');$('pageInfo').textContent = `Page ${currentPage} of ${Math.ceil(filteredHistory.length / ITEMS_PER_PAGE)}`;
+      $('prevBtn').disabled = currentPage === 1;
+      $('nextBtn').disabled = end >= filteredHistory.length;
+    } else {
+      $('paginationControls').classList.add('hidden');
     }
   }
 
-  function copyLink() {
-    copyToClipboard($('shortLink').value);
-  }
-
-  function showToast(msg, isError) {
-    const t = $('toast');
-    t.textContent  = msg || 'Done';
-    t.style.background = isError ? '#ef4444' : '#facc15';
-    t.style.color      = isError ? '#fff'    : '#000';
-    t.classList.add('show');
-    clearTimeout(t._tid);
-    t._tid = setTimeout(() => t.classList.remove('show'), 3000);
-  }
+  function prevPage() { if (currentPage > 1) { currentPage--; renderPage(); $('linksScroll').scrollTop = 0; } }
+  function nextPage() { if ((currentPage * ITEMS_PER_PAGE) < filteredHistory.length) { currentPage++; renderPage(); $('linksScroll').scrollTop = 0; } }
+  
+  function resetForm() { $('shortenerForm').classList.remove('hidden'); $('resultCard').classList.add('hidden');$('originalUrl').focus(); }
+  function copyLink() { copyToClipboard($('shortLink').value); }
+  function copyToClipboard(txt) { navigator.clipboard.writeText(txt); const t = $('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2000); }
   </script>
 </body>
 </html>
